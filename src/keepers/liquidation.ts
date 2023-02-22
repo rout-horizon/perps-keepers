@@ -1,5 +1,5 @@
 import { TransactionResponse } from '@ethersproject/abstract-provider';
-import { wei } from '@synthetixio/wei';
+import { wei } from '@rout-horizon/wei';
 import { BigNumber, Contract, Event, providers, utils } from 'ethers';
 import { chunk, flatten } from 'lodash';
 import { Keeper } from '.';

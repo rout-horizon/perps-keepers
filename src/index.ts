@@ -36,7 +36,8 @@ export const getProvider = async (
   // Infura has the highest priority (indicated by the lowest priority number).
   const providersConfig: providers.FallbackProviderConfig[] = [
     {
-      provider: new providers.InfuraProvider(network, config.infura),
+      provider: new providers.JsonRpcProvider(config.infura),
+      // provider: new providers.JsonRpcProvider(network, config.infura),
       priority: 10,
       stallTimeout: PROVIDER_STALL_TIMEOUT,
       weight: PROVIDER_DEFAULT_WEIGHT,
@@ -45,7 +46,8 @@ export const getProvider = async (
   if (config.alchemy) {
     logger.info('Alchemy API key provided. Adding as fallback provider');
     providersConfig.push({
-      provider: new providers.AlchemyProvider(network, config.alchemy),
+      provider: new providers.JsonRpcProvider(config.infura),
+      // provider: new providers.AlchemyProvider(network, config.alchemy),
       priority: 20,
       stallTimeout: PROVIDER_STALL_TIMEOUT,
       weight: PROVIDER_DEFAULT_WEIGHT,

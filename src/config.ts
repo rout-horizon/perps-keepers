@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { Network } from './typed';
 
 export const DEFAULT_CONFIG = {
-  fromBlock: 1,
+  fromBlock: 27296094,
   network: Network.OPT_GOERLI,
   maxOrderExecAttempts: 10,
   isMetricsEnabled: false,

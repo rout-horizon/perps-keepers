@@ -3,10 +3,10 @@ import { range } from 'lodash';
 import { Logger } from 'winston';
 import { PerpsEvent } from '../typed';
 
-const MAX_BLOCKS = 200_000;
+const MAX_BLOCKS = 5_000;
 
 export const getPaginatedFromAndTo = (fromBlock: number, toBlock: number) => {
-  const numberOfBlocks = toBlock - fromBlock || 1;
+  const numberOfBlocks = toBlock - fromBlock || 1; // 27296094
 
   const numberOfGroups = Math.ceil(numberOfBlocks / MAX_BLOCKS);
   return range(0, numberOfGroups).map((x: number) => {

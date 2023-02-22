@@ -27,6 +27,6 @@ export interface DelayedOrder {
 }
 
 export enum Network {
-  OPT = 'optimism',
-  OPT_GOERLI = 'optimism-goerli',
+  OPT = 'mainnet', // 'optimism',
+  OPT_GOERLI = 'testnet', // 'optimism-goerli',
 }

@@ -1,6 +1,6 @@
 import { Contract, providers, Signer, utils } from 'ethers';
 import { zipObject } from 'lodash';
-import synthetix from 'synthetix';
+import synthetix from '@rout-horizon/testnet-contracts';
 import PerpsV2MarketConsolidatedJson from '../contracts/PerpsV2MarketConsolidated.json';
 import PythAbi from '../contracts/Pyth.json';
 import { createLogger } from './logging';
@@ -18,16 +18,16 @@ interface KeeperContracts {
 
 // @see: https://docs.pyth.network/consume-data/evm
 const PYTH_CONTRACT_ADDRESSES: Record<Network, string> = {
-  [Network.OPT_GOERLI]: '0xff1a0f4744e8582DF1aE09D5611b887B6a12925C',
-  [Network.OPT]: '0xff1a0f4744e8582DF1aE09D5611b887B6a12925C',
+  [Network.OPT_GOERLI]: '0xd7308b14BF4008e7C7196eC35610B1427C5702EA',
+  [Network.OPT]: '0x4D7E825f80bDf85e913E0DD2A2D54927e9dE1594',
 };
 
 export const networkToSynthetixNetworkName = (network: Network): string => {
   switch (network) {
     case Network.OPT:
-      return 'mainnet-ovm';
+      return 'mainnet';
     case Network.OPT_GOERLI:
-      return 'goerli-ovm';
+      return 'testnet';
     default:
       throw new Error(`Unsupported Synthetix Network Name Mapping '${network}'`);
   }
