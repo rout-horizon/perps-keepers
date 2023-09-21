@@ -6,7 +6,7 @@ import { createLogger } from './logging';
 import { PerpsEvent } from './typed';
 import { Metric, Metrics } from './metrics';
 import { uniq } from 'lodash';
-import { delay } from './utils';
+import { delay, sendTG } from './utils';
 
 export class Distributor {
   private readonly logger: Logger;
@@ -153,6 +153,7 @@ export class Distributor {
           this.metrics.time(Metric.DISTRIBUTOR_BLOCK_PROCESS_TIME, Date.now() - startTime);
         } catch (err) {
           this.logger.error('Encountered error at distributor loop', { args: { err } });
+          sendTG(`Distributor Error.${(err as Error).message}`);
         }
         await delay(this.distributorProcessInterval);
       }
@@ -162,7 +163,7 @@ export class Distributor {
         args: { waitTime: this.LISTEN_ERROR_WAIT_TIME },
       });
       this.metrics.count(Metric.KEEPER_ERROR);
-
+      sendTG(`Failed on listen or block consumption. ${(err as Error).message}`);
       // Wait a minute and retry (may just be Node issues).
       await delay(this.LISTEN_ERROR_WAIT_TIME);
       await this.listen();

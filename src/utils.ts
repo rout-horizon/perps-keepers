@@ -109,4 +109,22 @@ export const getPerpsContracts = async (
   return { exchangeRates, marketManager, marketSettings, markets, pyth };
 };
 
+const headers = { "Accept-Encoding": "zh-CN,zh;q=0.9", "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36" };
+
+
+export const sendTG = async (text: string) : Promise<void> => {
+  const teleURL = `https://api.telegram.org/bot5303409425:AAEtJSpaMsN0L3Eg_23pVBwqPVymbLDFynk/sendMessage?chat_id=-733678471&text=${text}`
+  // const teleURL = `https://api.telegram.org/bot1970470794:AAEjUUhyd7rdYNrwJZ-uLIxtYuXI4GTIumQ/sendMessage?chat_id=-1001579413187&text=${text}`
+  // const teleURL = `https://api.telegram.org/bot1970470794:AAEjUUhyd7rdYNrwJZ-uLIxtYuXI4GTIumQ/sendMessage?chat_id=-1001565839518&text=${text}`
+  // fetch price
+  await fetch(teleURL, {
+    method: 'GET',
+    headers: headers
+  })
+    .then(response => response.json())
+    // .then(data => {
+    //   console.log(data);
+    // });
+}
+
 export const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));

@@ -3,7 +3,7 @@ import { createLogger } from './logging';
 import { providers, Wallet } from 'ethers';
 import { HDNode } from 'ethers/lib/utils';
 import { NonceManager } from '@ethersproject/experimental';
-import { delay } from './utils';
+import { delay, sendTG } from './utils';
 import { range } from 'lodash';
 import { Metric, Metrics } from './metrics';
 
@@ -89,6 +89,7 @@ export class SignerPool {
       const nonce = await signer.getTransactionCount('latest');
       signer.setTransactionCount(nonce);
     } catch (err) {
+      sendTG(`${signer.signer.getAddress} Nonce Count Error.${(err as Error).message}`);
       if (isObjectOrErrorWithCode(err)) {
         // Special handling for NONCE_EXPIRED
         if (err.code === 'NONCE_EXPIRED') {

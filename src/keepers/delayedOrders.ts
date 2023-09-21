@@ -4,7 +4,7 @@ import { Keeper } from '.';
 import { DelayedOrder, PerpsEvent } from '../typed';
 import { chunk } from 'lodash';
 import { Metric, Metrics } from '../metrics';
-import { delay } from '../utils';
+import { delay, sendTG } from '../utils';
 import { SignerPool } from '../signerpool';
 
 export class DelayedOrdersKeeper extends Keeper {
@@ -61,6 +61,8 @@ export class DelayedOrdersKeeper extends Keeper {
               timestamp = blockCache[blockNumber].timestamp;
             } catch (err) {
               this.logger.error(`Fetching block for evt failed '${evt.blockNumber}'`, err);
+              sendTG(`Delayed-Order, Fetching block for evt failed '${evt.blockNumber}'`);
+
               timestamp = 0;
             }
           } else {
@@ -113,6 +115,7 @@ export class DelayedOrdersKeeper extends Keeper {
       this.logger.info('Order execution exceeded max attempts', {
         args: { account, attempts: order.executionFailures },
       });
+      sendTG(`Delayed-Order, User ${order.account}, Order execution exceeded max attempts.`);
       delete this.orders[account];
       return;
     }
@@ -128,7 +131,8 @@ export class DelayedOrdersKeeper extends Keeper {
           this.logger.info('Submitted transaction, waiting for completion...', {
             args: { account, nonce: tx.nonce },
           });
-          await this.waitTx(tx);
+          const receipt = await this.waitTx(tx);
+          sendTG(`Delayed-OffchainOrder, User ${order.account}, Order execution succeeded. ${receipt.transactionHash}`);
           delete this.orders[account];
         },
         { asset: this.baseAsset }
@@ -140,6 +144,7 @@ export class DelayedOrdersKeeper extends Keeper {
       this.logger.error('Delayed order execution failed', {
         args: { executionFailures: order.executionFailures, account: order.account, err },
       });
+      sendTG(`Delayed-Order, User ${order.account}, Order execution failed. Please process soon ${(err as Error).message}`);
       this.logger.error((err as Error).stack);
     }
   }
@@ -187,6 +192,7 @@ export class DelayedOrdersKeeper extends Keeper {
     } catch (err) {
       this.logger.error('Failed to execute delayed order', { args: { err } });
       this.logger.error((err as Error).stack);
+      sendTG(`Delayed-Orders keeper failing. Please process soon ${(err as Error).message}`);
     }
   }
 }

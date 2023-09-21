@@ -5,7 +5,7 @@ import { DelayedOrder, PerpsEvent } from '../typed';
 import { chunk } from 'lodash';
 import { EvmPriceServiceConnection } from '@pythnetwork/pyth-evm-js';
 import { Metric, Metrics } from '../metrics';
-import { delay } from '../utils';
+import { delay, sendTG } from '../utils';
 import { SignerPool } from '../signerpool';
 
 export class DelayedOffchainOrdersKeeper extends Keeper {
@@ -146,6 +146,7 @@ export class DelayedOffchainOrdersKeeper extends Keeper {
       this.logger.info('Order execution exceeded max attempts', {
         args: { account, attempts: order.executionFailures },
       });
+      sendTG(`Delayed-OffchainOrder, User ${order.account}, Order execution exceeded max attempts.`);
       delete this.orders[account];
       return;
     }
@@ -173,14 +174,15 @@ export class DelayedOffchainOrdersKeeper extends Keeper {
             args: { account, fee: updateFee.toString() },
           });
           const tx = await this.market
-            .connect(signer)
-            .executeOffchainDelayedOrder(account, priceUpdateData, {
-              value: updateFee,
-            });
+          .connect(signer)
+          .executeOffchainDelayedOrder(account, priceUpdateData, {
+            value: updateFee,
+          });
           this.logger.info('Submitted transaction, waiting for completion...', {
             args: { account, nonce: tx.nonce },
           });
-          await this.waitTx(tx);
+          const receipt = await this.waitTx(tx);
+          sendTG(`Delayed-OffchainOrder, User ${order.account}, Order execution succeeded. ${receipt.transactionHash}`);
           delete this.orders[account];
         },
         { asset: this.baseAsset }
@@ -192,6 +194,7 @@ export class DelayedOffchainOrdersKeeper extends Keeper {
       this.logger.error('Off-chain order execution failed', {
         args: { executionFailures: order.executionFailures, account: order.account, err },
       });
+      sendTG(`Delayed-OffchainOrder, User ${order.account}, Order execution failed. Please process soon ${(err as Error).message}`);
       this.logger.error((err as Error).stack);
     }
   }
@@ -264,6 +267,7 @@ export class DelayedOffchainOrdersKeeper extends Keeper {
     } catch (err) {
       this.logger.error('Failed to execute off-chain order', { args: { err } });
       this.logger.error((err as Error).stack);
+      sendTG(`Delayed-OffchainOrders keeper failing. Please process soon ${(err as Error).message}`);
     }
   }
 }

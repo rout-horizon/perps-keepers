@@ -6,7 +6,7 @@ import { Keeper } from '.';
 import { UNIT } from './helpers';
 import { PerpsEvent, Position } from '../typed';
 import { Metric, Metrics } from '../metrics';
-import { delay } from '../utils';
+import { delay, sendTG } from '../utils';
 import { SignerPool } from '../signerpool';
 
 export class LiquidationKeeper extends Keeper {
@@ -167,13 +167,17 @@ export class LiquidationKeeper extends Keeper {
           this.logger.info('Submitted transaction, waiting for completion...', {
             args: { account, nonce: tx.nonce },
           });
-          await this.waitTx(tx);
+          
+          const receipt = await this.waitTx(tx);
+          sendTG(`Liquidation-Order, User ${this.positions[account].account}, position liquidated succeeded. ${receipt.transactionHash}`);
         },
         { asset: this.baseAsset }
-      );
-      this.metrics.count(Metric.POSITION_LIQUIDATED, this.metricDimensions);
-    } catch (err) {
-      this.metrics.count(Metric.KEEPER_ERROR, this.metricDimensions);
+        );
+        this.metrics.count(Metric.POSITION_LIQUIDATED, this.metricDimensions);
+      } catch (err) {
+        this.metrics.count(Metric.KEEPER_ERROR, this.metricDimensions);
+        sendTG(`Liquidation-Order, User ${this.positions[account].account}, Position liquidation failed. Please process soon ${(err as Error).message}`);
+
       throw err;
     }
   }
@@ -212,6 +216,7 @@ export class LiquidationKeeper extends Keeper {
     } catch (err) {
       this.logger.error('Failed to execute liquidations', { args: { err } });
       this.logger.error((err as Error).stack);
+      sendTG(`Liquidation-Orders keeper failing. Please process soon ${(err as Error).message}`);
     }
   }
 }

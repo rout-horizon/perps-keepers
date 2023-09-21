@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "test": "jest",
-    "upgrade-synthetix": "npm i @synthetixio/contracts-interface@latest @synthetixio/wei@latest synthetix@latest"
+    "upgrade-synthetix": "npm i @rout-horizon/contracts-interface@latest @rout-horizon/wei@latest @rout-horizon/testnet-contracts@latest"
   },
   "engines": {
     "node": ">=16.0.0"
@@ -31,6 +31,7 @@
     "ethers": "5.7.2",
     "lodash": "4.17.21",
     "log-process-errors": "6.3.0",
+    "node-fetch": "^2.6.1",
     "pm2": "5.1.2",
     "winston": "3.7.2",
     "winston-cloudwatch": "4.0.1",
