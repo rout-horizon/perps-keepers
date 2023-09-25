@@ -113,18 +113,22 @@ const headers = { "Accept-Encoding": "zh-CN,zh;q=0.9", "user-agent": "Mozilla/5.
 
 
 export const sendTG = async (text: string) : Promise<void> => {
-  const teleURL = `https://api.telegram.org/bot5303409425:AAEtJSpaMsN0L3Eg_23pVBwqPVymbLDFynk/sendMessage?chat_id=-733678471&text=${text}`
-  // const teleURL = `https://api.telegram.org/bot1970470794:AAEjUUhyd7rdYNrwJZ-uLIxtYuXI4GTIumQ/sendMessage?chat_id=-1001579413187&text=${text}`
-  // const teleURL = `https://api.telegram.org/bot1970470794:AAEjUUhyd7rdYNrwJZ-uLIxtYuXI4GTIumQ/sendMessage?chat_id=-1001565839518&text=${text}`
-  // fetch price
-  await fetch(teleURL, {
-    method: 'GET',
-    headers: headers
-  })
-    .then(response => response.json())
-    // .then(data => {
-    //   console.log(data);
-    // });
+  // const teleURL = `https://api.telegram.org/bot5303409425:AAEtJSpaMsN0L3Eg_23pVBwqPVymbLDFynk/sendMessage?chat_id=-733678471&text=${text}`
+  // // const teleURL = `https://api.telegram.org/bot1970470794:AAEjUUhyd7rdYNrwJZ-uLIxtYuXI4GTIumQ/sendMessage?chat_id=-1001579413187&text=${text}`
+  // // const teleURL = `https://api.telegram.org/bot1970470794:AAEjUUhyd7rdYNrwJZ-uLIxtYuXI4GTIumQ/sendMessage?chat_id=-1001565839518&text=${text}`
+  // // fetch price
+  // await fetch(teleURL, {
+  //   method: 'GET',
+  //   headers: headers
+  // })
+  //   .then(response => response.json())
+  //   // .then(data => {
+  //   //   console.log(data);
+  //   // });
+
+    let myPromise = new Promise(function(resolve, reject) {
+      resolve("I telegram You !!");
+    });
 }
 
 export const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
