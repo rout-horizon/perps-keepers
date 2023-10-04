@@ -16,7 +16,8 @@ export class Distributor {
   private readonly LISTEN_ERROR_WAIT_TIME = 15 * 1000; // 15s
   protected readonly START_TIME = Date.now();
 
-  private readonly MAX_BLOCK_RANGE = 1_000_000;
+  private readonly MAX_BLOCK_RANGE = 20_000;
+  // private readonly MAX_BLOCK_RANGE = 1_000_000;
 
   constructor(
     private readonly market: Contract,
@@ -43,6 +44,7 @@ export class Distributor {
   private async indexKeepers(): Promise<number> {
     const latestBlock = await this.provider.getBlockNumber();
     let fromBlock = this.fromBlock;
+    console.log("fromBlock**********", fromBlock);
 
     while (fromBlock <= latestBlock) {
       const toBlock = Math.min(fromBlock + this.MAX_BLOCK_RANGE, latestBlock);

@@ -3,7 +3,7 @@ import { range } from 'lodash';
 import { Logger } from 'winston';
 import { PerpsEvent } from '../typed';
 
-const MAX_BLOCKS = 5_000;
+const MAX_BLOCKS = 2_000;
 
 export const getPaginatedFromAndTo = (fromBlock: number, toBlock: number) => {
   const numberOfBlocks = toBlock - fromBlock || 1; // 27296094
@@ -38,8 +38,11 @@ export const getEvents = async (
       }
 
       const events = await Promise.all(
-        pagination.map(({ fromBlock, toBlock }) =>
-          contract.queryFilter(contract.filters[eventName](), fromBlock, toBlock)
+        pagination.map(({ fromBlock, toBlock }) => {
+          // console.log("fromBlock, toBlock", fromBlock, toBlock);
+          return contract.queryFilter(contract.filters[eventName](), fromBlock, toBlock)
+
+        }
         )
       );
       return events.flat(1);

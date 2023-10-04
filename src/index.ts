@@ -46,12 +46,33 @@ export const getProvider = async (
   if (config.alchemy) {
     logger.info('Alchemy API key provided. Adding as fallback provider');
     providersConfig.push({
-      provider: new providers.JsonRpcProvider(config.infura),
+      provider: new providers.JsonRpcProvider(config.alchemy),
       // provider: new providers.AlchemyProvider(network, config.alchemy),
       priority: 20,
       stallTimeout: PROVIDER_STALL_TIMEOUT,
       weight: PROVIDER_DEFAULT_WEIGHT,
     });
+    // providersConfig.push({
+    //   provider: new providers.JsonRpcProvider('https://bsc.getblock.io/76a2b683-85dc-4a76-ad75-5a34b64797ef/testnet/'),
+    //   // provider: new providers.AlchemyProvider(network, config.alchemy),
+    //   priority: 30,
+    //   stallTimeout: PROVIDER_STALL_TIMEOUT,
+    //   weight: PROVIDER_DEFAULT_WEIGHT,
+    // });
+    // providersConfig.push({
+    //   provider: new providers.JsonRpcProvider('https://bsc-testnet.blockpi.network/v1/rpc/b33a9b8035af2c307b1a2725d7dbc0cae1f453c6'),
+    //   // provider: new providers.AlchemyProvider(network, config.alchemy),
+    //   priority: 40,
+    //   stallTimeout: PROVIDER_STALL_TIMEOUT,
+    //   weight: PROVIDER_DEFAULT_WEIGHT,
+    // });
+    // providersConfig.push({
+    //   provider: new providers.JsonRpcProvider('https://bsc.getblock.io/b9c38e7f-8282-4721-ac54-bd2d995da779/testnet/'),
+    //   // provider: new providers.AlchemyProvider(network, config.alchemy),
+    //   priority: 50,
+    //   stallTimeout: PROVIDER_STALL_TIMEOUT,
+    //   weight: PROVIDER_DEFAULT_WEIGHT,
+    // });
   }
 
   // @see: https://docs.ethers.org/v5/api/providers/other/#FallbackProvider
@@ -136,18 +157,18 @@ export const run = async (config: KeeperConfig) => {
       logger.debug('Not registering off-chain keeper as feed not defined', { args: { baseAsset } });
     }
 
-    keepers.push(
-      new DelayedOrdersKeeper(
-        market.contract,
-        exchangeRates,
-        baseAsset,
-        signerPool,
-        provider,
-        metrics,
-        config.network,
-        config.maxOrderExecAttempts
-      )
-    );
+    // keepers.push(
+    //   new DelayedOrdersKeeper(
+    //     market.contract,
+    //     exchangeRates,
+    //     baseAsset,
+    //     signerPool,
+    //     provider,
+    //     metrics,
+    //     config.network,
+    //     config.maxOrderExecAttempts
+    //   )
+    // );
     logger.info('Registering keepers to distributor', { args: { n: keepers.length } });
 
     // Register all instantiated keepers. The order of importance is as follows:
