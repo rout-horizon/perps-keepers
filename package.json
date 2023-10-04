@@ -1,19 +1,17 @@
 {
-  "name": "horizon-testnet-perps-keepers",
+  "name": "perps-keepers",
   "version": "2.0.0",
   "main": "src/index.js",
   "license": "MIT",
   "scripts": {
-    "start": "pm2 start ecosystem.config.js",
     "start:mainnet": "pm2 start ecosystem.config.js --only perps-keeper-mainnet",
-    "start:testnet": "pm2 start ecosystem.config.js --only perps-keeper-testnet",
     "dev": "name=perps-keeper-testnet ts-node-dev --respawn --transpile-only src/index.ts run",
     "dev:mainnet": "name=perps-keeper-mainnet ts-node-dev --respawn --transpile-only src/index.ts run",
-    "build": "tsc && touch .env && touch .env.staging && cp .env build/ && cp .env.staging build/",
+    "build": "rm -rf build/ && tsc && touch .env && cp .env build/",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "test": "jest",
-    "upgrade-synthetix": "npm i @rout-horizon/contracts-interface@latest @rout-horizon/wei@latest @rout-horizon/testnet-contracts@latest"
+    "upgrade-synthetix": "npm i @synthetixio/contracts-interface@latest @synthetixio/wei@latest synthetix@latest"
   },
   "engines": {
     "node": ">=16.0.0"
@@ -24,15 +22,15 @@
     "@ethersproject/abstract-provider": "5.5.1",
     "@ethersproject/experimental": "5.6.0",
     "@pythnetwork/pyth-evm-js": "^1.1.0",
-    "@rout-horizon/contracts-interface": "npm:@rout-horizon/horizon-testnet-contracts-interface@^1.8.0",
-    "@rout-horizon/testnet-contracts": "npm:@rout-horizon/horizon-testnet@^2.15.0",
-    "@rout-horizon/wei": "^2.74.5",
+    "@rout-horizon/horizon-testnet": "^2.15.0",
+    "@synthetixio/wei": "^2.74.4",
+    "axios": "^1.3.5",
     "dotenv": "^16.0.3",
     "ethers": "5.7.2",
     "lodash": "4.17.21",
     "log-process-errors": "6.3.0",
-    "node-fetch": "^2.6.1",
     "pm2": "5.1.2",
+    "synthetix": "^2.91.1",
     "winston": "3.7.2",
     "winston-cloudwatch": "4.0.1",
     "zod": "^3.20.2"

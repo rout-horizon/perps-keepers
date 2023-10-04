@@ -1,4 +1,4 @@
-import { TransactionResponse, TransactionReceipt } from '@ethersproject/providers';
+import { TransactionResponse } from '@ethersproject/providers';
 import { Contract, Event, providers } from 'ethers';
 import { Logger } from 'winston';
 import { createLogger } from '../logging';
@@ -61,12 +61,11 @@ export class Keeper {
     delete this.activeKeeperTasks[id];
   }
 
-  protected async waitTx(tx: TransactionResponse): Promise<TransactionReceipt> {
+  protected async waitTx(tx: TransactionResponse): Promise<void> {
     const receipt = await tx.wait(1);
     const { blockNumber, status, transactionHash, gasUsed } = receipt;
     this.logger.info('Transaction completed!', {
       args: { tx: transactionHash, blockNumber, status, gasUsed },
     });
-    return receipt;
   }
 }

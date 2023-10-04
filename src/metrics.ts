@@ -14,6 +14,9 @@ export enum Metric {
   // How long this keeper has been up and executing.
   KEEPER_UPTIME = 'KeeperUpTime',
 
+  // Amount of ETH in the keeper address.
+  KEEPER_SIGNER_ETH_BALANCE = 'KeeperSignerEthBalance',
+
   // A metric sent upon startup (useful to track freq of crash & restarts).
   KEEPER_STARTUP = 'KeeperStartUp',
 
@@ -30,6 +33,9 @@ export enum Metric {
 
   // Delayed order executed successfully.
   DELAYED_ORDER_EXECUTED = 'DelayedOrderExecuted',
+
+  // Delayed order executed mid-processing (includes off/on chain).
+  DELAYED_ORDER_ALREADY_EXECUTED = 'DelayedOrderAlreadyExecuted',
 
   // Offchain order executed successfully.
   OFFCHAIN_ORDER_EXECUTED = 'OffchainOrderExecuted',

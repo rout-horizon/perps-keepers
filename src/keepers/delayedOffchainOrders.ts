@@ -5,8 +5,9 @@ import { DelayedOrder, PerpsEvent } from '../typed';
 import { chunk } from 'lodash';
 import { EvmPriceServiceConnection } from '@pythnetwork/pyth-evm-js';
 import { Metric, Metrics } from '../metrics';
-import { delay, sendTG } from '../utils';
+import { delay } from '../utils';
 import { SignerPool } from '../signerpool';
+import { wei } from '@synthetixio/wei';
 
 export class DelayedOffchainOrdersKeeper extends Keeper {
   // The index
@@ -16,8 +17,8 @@ export class DelayedOffchainOrdersKeeper extends Keeper {
   // An additional buffer added to minAge to avoid calling too early.
   //
   // Note: Since we don't use block.timestamp but rather Date.now, timestamps on-chain
-  // may not be up to date as a result, executing a tiny bit too early.
-  private readonly MIN_AGE_BUFFER = 3;
+  // may not be up to date as a result, executing a tiny bit too early (as seconds).
+  private readonly MIN_AGE_BUFFER = 10;
 
   // An additional buffer added to maxAge to determine if an order is stale.
   private readonly MAX_AGE_BUFFER = 60 * 5; // 5mins (in seconds).
@@ -71,7 +72,7 @@ export class DelayedOffchainOrdersKeeper extends Keeper {
       const { account } = args;
       switch (event) {
         case PerpsEvent.DelayedOrderSubmitted: {
-          const { targetRoundId, executableAtTime, intentionTime, isOffchain } = args;
+          const { executableAtTime, intentionTime, isOffchain } = args;
 
           if (!isOffchain) {
             this.logger.debug('Order is not off-chain, skipping', {
@@ -105,7 +106,6 @@ export class DelayedOffchainOrdersKeeper extends Keeper {
           }
 
           this.orders[account] = {
-            targetRoundId: targetRoundId,
             executableAtTime: executableAtTime,
             account,
             intentionTime: timestamp,
@@ -128,6 +128,34 @@ export class DelayedOffchainOrdersKeeper extends Keeper {
     }
   }
 
+  hydrateIndex(orders: DelayedOrder[]) {
+    this.logger.debug('hydrating orders index from data on-chain', {
+      args: {
+        n: orders.length,
+      },
+    });
+
+    const prevOrdersLength = Object.keys(this.orders).length;
+    const newOrders: Record<string, DelayedOrder> = {};
+
+    for (const order of orders) {
+      // ...order first because we want to override any default settings with existing values so that
+      // they can be persisted between hydration (e.g. status).
+      newOrders[order.account] = { ...order, ...this.orders[order.account] };
+    }
+    this.orders = newOrders;
+    const currOrdersLength = Object.keys(this.orders).length;
+
+    if (prevOrdersLength !== currOrdersLength) {
+      this.logger.info('Orders change detected', {
+        args: {
+          delta: currOrdersLength - prevOrdersLength,
+          n: currOrdersLength,
+        },
+      });
+    }
+  }
+
   private async executeOrder(
     account: string,
     isOrderStale: (order: DelayedOrder) => boolean
@@ -146,7 +174,6 @@ export class DelayedOffchainOrdersKeeper extends Keeper {
       this.logger.info('Order execution exceeded max attempts', {
         args: { account, attempts: order.executionFailures },
       });
-      sendTG(`Delayed-OffchainOrder, User ${order.account}, Order execution exceeded max attempts.`);
       delete this.orders[account];
       return;
     }
@@ -170,31 +197,58 @@ export class DelayedOffchainOrdersKeeper extends Keeper {
           ]);
           const updateFee = await this.pythContract.getUpdateFee(priceUpdateData);
 
+          // Perform one last check on-chain to see if order actually exists.
+          //
+          // Do this right before execution to minimise actions that could occur before this check
+          // and execution.
+          const order = await this.market.delayedOrders(account);
+          if (order.sizeDelta.eq(0)) {
+            this.logger.info('Order does not exist, avoiding execution', { args: { account } });
+            delete this.orders[account];
+            await this.metrics.count(Metric.DELAYED_ORDER_ALREADY_EXECUTED, this.metricDimensions);
+            return;
+          } else {
+            this.logger.info('Order found on-chain. Continuing...', { args: { account } });
+          }
+
           this.logger.info('Executing off-chain order...', {
             args: { account, fee: updateFee.toString() },
           });
-          const tx = await this.market
-          .connect(signer)
-          .executeOffchainDelayedOrder(account, priceUpdateData, {
+
+          const market = this.market.connect(signer);
+          const gasEstimation = await market.estimateGas.executeOffchainDelayedOrder(
+            account,
+            priceUpdateData,
+            {
+              value: updateFee,
+            }
+          );
+          const gasLimit = wei(gasEstimation)
+            .mul(1.2)
+            .toBN();
+
+          this.logger.info('Estimated gas with upped limits', {
+            args: { account, estimation: gasEstimation.toString(), limit: gasLimit.toString() },
+          });
+          const tx = await market.executeOffchainDelayedOrder(account, priceUpdateData, {
             value: updateFee,
+            gasLimit,
           });
           this.logger.info('Submitted transaction, waiting for completion...', {
             args: { account, nonce: tx.nonce },
           });
-          const receipt = await this.waitTx(tx);
-          sendTG(`Delayed-OffchainOrder, User ${order.account}, Order execution succeeded. ${receipt.transactionHash}`);
+          await this.waitTx(tx);
           delete this.orders[account];
         },
         { asset: this.baseAsset }
       );
-      this.metrics.count(Metric.OFFCHAIN_ORDER_EXECUTED, this.metricDimensions);
+      await this.metrics.count(Metric.OFFCHAIN_ORDER_EXECUTED, this.metricDimensions);
     } catch (err) {
       order.executionFailures += 1;
-      this.metrics.count(Metric.KEEPER_ERROR, this.metricDimensions);
+      await this.metrics.count(Metric.KEEPER_ERROR, this.metricDimensions);
       this.logger.error('Off-chain order execution failed', {
         args: { executionFailures: order.executionFailures, account: order.account, err },
       });
-      sendTG(`Delayed-OffchainOrder, User ${order.account}, Order execution failed. Please process soon ${(err as Error).message}`);
       this.logger.error((err as Error).stack);
     }
   }
@@ -267,7 +321,6 @@ export class DelayedOffchainOrdersKeeper extends Keeper {
     } catch (err) {
       this.logger.error('Failed to execute off-chain order', { args: { err } });
       this.logger.error((err as Error).stack);
-      sendTG(`Delayed-OffchainOrders keeper failing. Please process soon ${(err as Error).message}`);
     }
   }
 }

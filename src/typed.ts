@@ -1,16 +1,21 @@
 import { ethers } from 'ethers';
 
+export enum KeeperType {
+  OffchainOrder = 'OffchainOrder',
+  Liquidator = 'Liquidator',
+}
+
 export enum PerpsEvent {
   PositionModified = 'PositionModified',
   PositionLiquidated = 'PositionLiquidated',
   FundingRecomputed = 'FundingRecomputed',
   DelayedOrderSubmitted = 'DelayedOrderSubmitted',
   DelayedOrderRemoved = 'DelayedOrderRemoved',
+  PositionFlagged = 'PositionFlagged',
 }
 
 export interface Position {
   id: string;
-  event: string;
   account: string;
   size: number;
   leverage: number;
@@ -20,13 +25,12 @@ export interface Position {
 
 export interface DelayedOrder {
   account: string;
-  targetRoundId: ethers.BigNumber;
   executableAtTime: ethers.BigNumber;
   intentionTime: number; // Timestamp of block at which this event was triggered (submission ts).
   executionFailures: number; // Number of times this has failed to execute
 }
 
 export enum Network {
-  OPT = 'mainnet', // 'optimism',
-  OPT_GOERLI = 'testnet', // 'optimism-goerli',
+  OPT = 'mainnet',
+  OPT_GOERLI = 'testnet',
 }

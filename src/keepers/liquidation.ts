@@ -1,12 +1,12 @@
 import { TransactionResponse } from '@ethersproject/abstract-provider';
-import { wei } from '@rout-horizon/wei';
+import { wei } from '@synthetixio/wei';
 import { BigNumber, Contract, Event, providers, utils } from 'ethers';
 import { chunk, flatten } from 'lodash';
 import { Keeper } from '.';
 import { UNIT } from './helpers';
 import { PerpsEvent, Position } from '../typed';
 import { Metric, Metrics } from '../metrics';
-import { delay, sendTG } from '../utils';
+import { delay } from '../utils';
 import { SignerPool } from '../signerpool';
 
 export class LiquidationKeeper extends Keeper {
@@ -21,6 +21,7 @@ export class LiquidationKeeper extends Keeper {
     PerpsEvent.FundingRecomputed,
     PerpsEvent.PositionLiquidated,
     PerpsEvent.PositionModified,
+    PerpsEvent.PositionFlagged,
   ];
 
   constructor(
@@ -71,7 +72,6 @@ export class LiquidationKeeper extends Keeper {
           }
           this.positions[account] = {
             id,
-            event,
             account,
             size: wei(size)
               .div(UNIT)
@@ -91,12 +91,45 @@ export class LiquidationKeeper extends Keeper {
           delete this.positions[args.account];
           return;
         }
+        case PerpsEvent.PositionFlagged: {
+          delete this.positions[args.account];
+          return;
+        }
         default:
           this.logger.debug('No handler found for event', {
             args: { event, blockNumber },
           });
       }
     });
+  }
+
+  hydrateIndex(positions: Position[], block: providers.Block) {
+    this.logger.debug('hydrating index from data on-chain', {
+      args: {
+        n: positions.length,
+      },
+    });
+
+    const prevPositionsLength = Object.keys(this.positions).length;
+    const newPositions: Record<string, Position> = {};
+
+    for (const position of positions) {
+      // ...order first because we want to override any default settings with existing values so that
+      // they can be persisted between hydration (e.g. status).
+      newPositions[position.account] = { ...position, ...this.positions[position.account] };
+    }
+    this.positions = newPositions;
+    this.blockTipTimestamp = block.timestamp;
+
+    const currPositionsLength = Object.keys(this.positions).length;
+    if (prevPositionsLength !== currPositionsLength) {
+      this.logger.info('Orders change detected', {
+        args: {
+          delta: currPositionsLength - prevPositionsLength,
+          n: currPositionsLength,
+        },
+      });
+    }
   }
 
   private liquidationGroups(
@@ -144,40 +177,48 @@ export class LiquidationKeeper extends Keeper {
   }
 
   private async liquidatePosition(account: string) {
-    const canLiquidateOrder = await this.market.canLiquidate(account);
-    if (!canLiquidateOrder) {
-      // if it's not liquidatable update it's liquidation price
-      this.positions[account].liqPrice = parseFloat(
-        utils.formatUnits((await this.market.liquidationPrice(account)).price)
-      );
-      this.positions[account].liqPriceUpdatedTimestamp = this.blockTipTimestamp;
-      this.logger.info('Cannot liquidate position', {
-        args: { account, liqPrice: this.positions[account].liqPrice },
-      });
-      return;
-    }
-
     try {
-      await this.signerPool.withSigner(
-        async signer => {
-          this.logger.info('Liquidating position...', { args: { account } });
-          const tx: TransactionResponse = await this.market
-            .connect(signer)
-            .liquidatePosition(account);
-          this.logger.info('Submitted transaction, waiting for completion...', {
-            args: { account, nonce: tx.nonce },
-          });
-          
-          const receipt = await this.waitTx(tx);
-          sendTG(`Liquidation-Order, User ${this.positions[account].account}, position liquidated succeeded. ${receipt.transactionHash}`);
-        },
-        { asset: this.baseAsset }
+      this.logger.debug('Checking if can liquidate', { args: { account } });
+      const canLiquidateOrder = await this.market.canLiquidate(account);
+      if (!canLiquidateOrder) {
+        // if it's not liquidatable update it's liquidation price
+        this.positions[account].liqPrice = parseFloat(
+          utils.formatUnits((await this.market.liquidationPrice(account)).price)
         );
-        this.metrics.count(Metric.POSITION_LIQUIDATED, this.metricDimensions);
-      } catch (err) {
-        this.metrics.count(Metric.KEEPER_ERROR, this.metricDimensions);
-        sendTG(`Liquidation-Order, User ${this.positions[account].account}, Position liquidation failed. Please process soon ${(err as Error).message}`);
+        this.positions[account].liqPriceUpdatedTimestamp = this.blockTipTimestamp;
+        this.logger.info('Cannot liquidate position', {
+          args: { account, liqPrice: this.positions[account].liqPrice },
+        });
+        return;
+      }
 
+      await this.signerPool
+        .withSigner(
+          async signer => {
+            const market = this.market.connect(signer);
+
+            this.logger.info('Flagging position...', { args: { account } });
+            const flagTx: TransactionResponse = await market.connect(signer).flagPosition(account);
+            this.logger.info('Submitted transaction, waiting for completion...', {
+              args: { account, nonce: flagTx.nonce },
+            });
+            await this.waitTx(flagTx);
+
+            this.logger.info('Liquidating position...', { args: { account } });
+            const liquidateTx: TransactionResponse = await market
+              .connect(signer)
+              .liquidatePosition(account);
+            this.logger.info('Submitted transaction, waiting for completion...', {
+              args: { account, nonce: liquidateTx.nonce },
+            });
+            await this.waitTx(liquidateTx);
+            await this.metrics.count(Metric.POSITION_LIQUIDATED, this.metricDimensions);
+          },
+          { asset: this.baseAsset }
+        )
+        .catch(err => {});
+    } catch (err) {
+      await this.metrics.count(Metric.KEEPER_ERROR, this.metricDimensions);
       throw err;
     }
   }
@@ -193,12 +234,12 @@ export class LiquidationKeeper extends Keeper {
 
       // No positions. Move on.
       if (positionCount === 0) {
-        this.logger.info('No positions ready... skipping');
+        this.logger.debug('No positions ready... skipping');
         return;
       }
 
       this.logger.info(`Found ${positionCount}/${openPositions.length} open position(s) to check`);
-      for (let group of positionGroups) {
+      for (const group of positionGroups) {
         if (!group.length) {
           continue;
         }
@@ -216,7 +257,6 @@ export class LiquidationKeeper extends Keeper {
     } catch (err) {
       this.logger.error('Failed to execute liquidations', { args: { err } });
       this.logger.error((err as Error).stack);
-      sendTG(`Liquidation-Orders keeper failing. Please process soon ${(err as Error).message}`);
     }
   }
 }

@@ -13,19 +13,3 @@ declare module 'synthetix' {
     abi: any;
   };
 }
-
-declare module '@rout-horizon/testnet-contracts' {
-  function getTarget({
-    network: string,
-    contract: string,
-  }): {
-    address: string;
-  };
-
-  function getSource({
-    network: string,
-    contract: string,
-  }): {
-    abi: any;
-  };
-}

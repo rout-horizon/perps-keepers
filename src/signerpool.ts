@@ -3,7 +3,8 @@ import { createLogger } from './logging';
 import { providers, Wallet } from 'ethers';
 import { HDNode } from 'ethers/lib/utils';
 import { NonceManager } from '@ethersproject/experimental';
-import { delay, sendTG } from './utils';
+import { wei } from '@synthetixio/wei';
+import { delay } from './utils';
 import { range } from 'lodash';
 import { Metric, Metrics } from './metrics';
 
@@ -54,6 +55,10 @@ export class SignerPool {
     this.logger.info('Initialized signer pool', { args: this.getLogArgs() });
   }
 
+  getSigners(): NonceManager[] {
+    return this.signers;
+  }
+
   private getLogArgs(): Record<string, string | number> {
     return { pool: this.pool.join(','), n: this.pool.length };
   }
@@ -62,20 +67,20 @@ export class SignerPool {
     this.logger.info(`[${ctx.asset}] Awaiting signer...`, { args: this.getLogArgs() });
     let i = this.pool.shift();
 
-    this.metrics.gauge(Metric.SIGNER_POOL_SIZE, this.pool.length);
+    await this.metrics.gauge(Metric.SIGNER_POOL_SIZE, this.pool.length);
     while (i === undefined) {
       await delay(this.ACQUIRE_SIGNER_DELAY);
       i = this.pool.shift();
     }
 
-    this.metrics.gauge(Metric.SIGNER_POOL_SIZE, this.pool.length);
+    await this.metrics.gauge(Metric.SIGNER_POOL_SIZE, this.pool.length);
     this.logger.info(`[${ctx.asset}] Acquired signer @ index '${i}'`, { args: this.getLogArgs() });
     return [i, this.signers[i]];
   }
 
-  private release(i: number, ctx: WithSignerContext) {
+  private async release(i: number, ctx: WithSignerContext) {
     this.pool.push(i);
-    this.metrics.gauge(Metric.SIGNER_POOL_SIZE, this.pool.length);
+    await this.metrics.gauge(Metric.SIGNER_POOL_SIZE, this.pool.length);
     this.logger.info(`[${ctx.asset}] Released signer @ index '${i}'`, { args: this.getLogArgs() });
   }
 
@@ -89,7 +94,6 @@ export class SignerPool {
       const nonce = await signer.getTransactionCount('latest');
       signer.setTransactionCount(nonce);
     } catch (err) {
-      sendTG(`${signer.signer.getAddress} Nonce Count Error.${(err as Error).message}`);
       if (isObjectOrErrorWithCode(err)) {
         // Special handling for NONCE_EXPIRED
         if (err.code === 'NONCE_EXPIRED') {
@@ -101,7 +105,22 @@ export class SignerPool {
       }
       throw err;
     } finally {
-      this.release(i, ctx);
+      await this.release(i, ctx);
     }
+  }
+
+  monitor(interval: number): NodeJS.Timer {
+    const trackEthBalance = async () => {
+      this.logger.info(`Performing signer monitor...`, { args: { interval } });
+      for (const signer of this.signers) {
+        const balance = wei(await signer.getBalance()).toNumber();
+        const address = await signer.getAddress();
+        this.logger.info(`Tracking ETH balance for signer...`, { args: { address, balance } });
+        await this.metrics.gauge(Metric.KEEPER_SIGNER_ETH_BALANCE, balance);
+      }
+    };
+
+    trackEthBalance();
+    return setInterval(trackEthBalance, interval);
   }
 }

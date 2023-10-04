@@ -1,14 +1,10 @@
-// PM2 Config
 module.exports = {
   apps: [
     {
       name: 'perps-keeper-mainnet',
-      script: './build/src/index.js',
-      args: 'run',
-    },
-    {
-      name: 'perps-keeper-testnet',
-      script: './build/src/index.js',
+      cron_restart: '0 0 * * *',
+      max_memory_restart: '1000M',
+      script: './build/index.js',
       args: 'run',
     },
   ],

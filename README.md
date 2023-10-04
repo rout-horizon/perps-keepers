@@ -2,6 +2,9 @@
 
 **Welcome to perps-keepers!**
 
+> **Note**
+> PLEASE _ONLY_ USE THIS REPOSITORY AS AN EXAMPLE TO BUILD YOUR OWN KEEPER.
+
 This repository houses Synthetix Perps keepers to maintain the health and provide a better UX for traders on frontends such as Kwenta and Decentrex. `perps-keepers` provides 3 main functions. These include:
 
 1. Liquidation of underwater positions
@@ -20,19 +23,24 @@ This project is a [fork of futures-keepers](https://github.com/Synthetixio/futur
 
 Variables for configuration are defined as environment variables. During development they are stored in an `.env.staging` file at the project root then loaded via [dotenv](https://www.npmjs.com/package/dotenv). The contents are as follows:
 
-| Variable                       | Required | Description                                                        | Default                         |
-| :----------------------------- | :------- | :----------------------------------------------------------------- | :------------------------------ |
-| `ETH_HDWALLET_MNEMONIC`        | Yes      | Mnemonic used to unlock the keeper's wallet                        |                                 |
-| `PROVIDER_API_KEY_INFURA`      | Yes      | Infura RPC provider API key                                        |                                 |
-| `PROVIDER_API_KEY_ALCHEMY`     | No       | An optional Alchemy RPC API key to fallback if Infura falls key    |                                 |
-| `NETWORK`                      | No       | Network to keep against (goerli-ovm, mainnet-ovm)                  | optimism-goerli                 |
-| `FROM_BLOCK`                   | No       | Default block to index from                                        | 1                               |
-| `SIGNER_POOL_SIZE`             | No       | Number of accounts from ETH_HD_WALLET to use as signers            | 1                               |
-| `DISTRIBUTOR_PROCESS_INTERVAL` | No       | Number of ms to wait before processing the next batch of blocks    | 3000                            |
-| `MAX_ORDER_EXEC_ATTEMPTS`      | No       | Maximum number of order execution attempst to try before ignoring  | 10                              |
-| `METRICS_ENABLED`              | No       | Metrics enabled/disabled (1 = enabled, everything else = disabled) | 0                               |
-| `PYTH_PRICE_SERVER`            | No       | Off-chain HTTP API endpoint sued to fetch Pyth oracle prices       | https://xc-testnet.pyth.network |
-| `LOG_LEVEL`                    | No       | Application log level                                              | info                            |
+| Variable                       | Required | Description                                                        | Default                               |
+| :----------------------------- | :------- | :----------------------------------------------------------------- | :------------------------------------ |
+| `ETH_HDWALLET_MNEMONIC`        | Yes      | Mnemonic used to unlock the keeper's wallet                        |                                       |
+| `PROVIDER_API_KEY_INFURA`      | Yes      | Infura RPC provider API key                                        |                                       |
+| `PROVIDER_API_KEY_ALCHEMY`     | No       | An optional Alchemy RPC API key to fallback if Infura falls key    |                                       |
+| `NETWORK`                      | No       | Network to keep against (goerli-ovm, mainnet-ovm)                  | optimism-goerli                       |
+| `FROM_BLOCK`                   | No       | Default block to index from                                        | 1                                     |
+| `SIGNER_POOL_SIZE`             | No       | Number of accounts from ETH_HD_WALLET to use as signers            | 1                                     |
+| `SIGNER_POOL_MONITOR_INTERVAL` | No       | Amount of time between signer monitor in ms                        | 600000                                |
+| `DISTRIBUTOR_PROCESS_INTERVAL` | No       | Number of ms to wait before processing the next batch of blocks    | 3000                                  |
+| `MAX_ORDER_EXEC_ATTEMPTS`      | No       | Maximum number of order execution attempst to try before ignoring  | 10                                    |
+| `METRICS_ENABLED`              | No       | Metrics enabled/disabled (1 = enabled, everything else = disabled) | 0                                     |
+| `PYTH_PRICE_SERVER`            | No       | Off-chain HTTP API endpoint sued to fetch Pyth oracle prices       | https://xc-testnet.pyth.network       |
+| `LOG_LEVEL`                    | No       | Application log level                                              | info                                  |
+| `AUTO_SWAP_SUSD_ENABLED`       | No       | Whether to swap sUSD rewards for ETH (via 1inch)                   | 0                                     |
+| `AUTO_SWAP_MIN_SUSD`           | No       | Minimum amount of sUSD before swapping no 1inch                    | \$50 USD (10^18)                      |
+| `AUTO_SWAP_INTERVAL`           | No       | Amount of time between to wait between swapping                    | 24hrs (ms)                            |
+| `ENABLED_KEEPERS`              | No       | A list of keeper types to enable for execution                     | DelayedOrder,OffchainOrder,Liquidator |
 
 _For an example `.env` see `.env.example`. All input variables are validated, see `./src/config.ts` for more details (including defaults). Speak with another developer for `.env` values._
 
