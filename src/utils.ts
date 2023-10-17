@@ -186,28 +186,37 @@ const getAddressLengthByMarket = async (
     const { state } = markets[marketKey];
     return {
       target: state.address,
-      callData: state.interface.encodeFunctionData(rpcFunctionName),
+      allowFailure: false,
+      callData: state.interface.encodeFunctionData(rpcFunctionName, []),
     };
   });
   console.log("******reaching here*****2", getLengthCalls)
-  const result = await multicall.callStatic.aggregate(getLengthCalls, {
-    blockTag: block.number,
-  });
-  
-  console.log("******reaching here*****3")
+  // console.log("******reaching here*****2", multicall)
+  const result = await multicall.callStatic.aggregate3(getLengthCalls
+    // blockTag: block.number,
+  );
+  // const result = await multicall.callStatic.aggregate(getLengthCalls, {
+  //   blockTag: block.number,
+  // });
+  console.log("******reaching here*****3", result)
   const lengthByMarket: Record<string, BigNumber> = {};
-  result.returnData.forEach((data: string, i: number) => {
+  result.forEach((data: any, i: number) => {
+    // result.returnData.forEach((data: string, i: number) => {
     const marketKey = marketKeys[i];
     const { state } = markets[marketKey];
     const length: BigNumber = state.interface.decodeFunctionResult(
       state.interface.getFunction(rpcFunctionName),
-      data
-    )[0];
+      data.returnData
+      // data
+      )[0];
+      
+    console.log("******reaching length here*****4", length)
     // Avoid processing markets that have no positions.
     if (length.gt(0)) {
       lengthByMarket[marketKey] = length;
     }
   });
+  console.log("******reaching length here*****5", lengthByMarket)
   return lengthByMarket;
 };
 

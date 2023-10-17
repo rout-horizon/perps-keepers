@@ -22,7 +22,7 @@
     "@ethersproject/abstract-provider": "5.5.1",
     "@ethersproject/experimental": "5.6.0",
     "@pythnetwork/pyth-evm-js": "^1.1.0",
-    "@rout-horizon/horizon-testnet": "^2.15.0",
+    "@rout-horizon/horizon-testnet": "^2.18.0",
     "@synthetixio/wei": "^2.74.4",
     "axios": "^1.3.5",
     "dotenv": "^16.0.3",
