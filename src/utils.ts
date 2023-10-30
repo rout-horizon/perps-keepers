@@ -1,7 +1,7 @@
 import { Contract, providers, Signer, BigNumber, utils } from 'ethers';
 import { chunk, flatten, isEmpty, sum, zipObject } from 'lodash';
-// import synthetix from 'synthetix';
-import synthetix from '@rout-horizon/horizon-testnet';
+import synthetix from '@rout-horizon/testnet-contracts';
+// import synthetix from '@rout-horizon/horizon-testnet';
 import PerpsV2MarketConsolidatedJson from './abi/PerpsV2MarketConsolidated.json';
 import PythAbi from './abi/Pyth.json';
 import { createLogger } from './logging';
@@ -181,7 +181,6 @@ const getAddressLengthByMarket = async (
     rpcFunctionName = 'getDelayedOrderAddressesLength';
   }
 
-  // console.log("******reaching here*****1", block)
   const getLengthCalls = marketKeys.map(marketKey => {
     const { state } = markets[marketKey];
     return {
@@ -190,15 +189,12 @@ const getAddressLengthByMarket = async (
       callData: state.interface.encodeFunctionData(rpcFunctionName, []),
     };
   });
-  console.log("******reaching here*****2", getLengthCalls)
-  // console.log("******reaching here*****2", multicall)
   const result = await multicall.callStatic.aggregate3(getLengthCalls
     // blockTag: block.number,
   );
   // const result = await multicall.callStatic.aggregate(getLengthCalls, {
   //   blockTag: block.number,
   // });
-  console.log("******reaching here*****3", result)
   const lengthByMarket: Record<string, BigNumber> = {};
   result.forEach((data: any, i: number) => {
     // result.returnData.forEach((data: string, i: number) => {
@@ -210,13 +206,13 @@ const getAddressLengthByMarket = async (
       // data
       )[0];
       
-    console.log("******reaching length here*****4", length)
+    // console.log("******reaching length here*****4", length)
     // Avoid processing markets that have no positions.
     if (length.gt(0)) {
       lengthByMarket[marketKey] = length;
     }
   });
-  console.log("******reaching length here*****5", lengthByMarket)
+  // console.log("******reaching length here*****5", lengthByMarket)
   return lengthByMarket;
 };
 

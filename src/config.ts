@@ -13,12 +13,14 @@ export const DEFAULT_CONFIG = {
   autoSwapMinSusd: Math.pow(10, 18) * 50, // $50 USD
   autoSwapInterval: 1000 * 60 * 60 * 24, // 24hrs
 
-  enabledKeepers: [KeeperType.OffchainOrder, KeeperType.Liquidator],
+  // enabledKeepers: [KeeperType.OffchainOrder, KeeperType.Liquidator],
+  enabledKeepers: [KeeperType.DelayedOrder, KeeperType.OffchainOrder, KeeperType.Liquidator],
 
   // @see: https://github.com/pyth-network/pyth-js/tree/main/pyth-evm-js
   //   'https://xc-testnet.pyth.network'
   //   'https://xc-mainnet.pyth.network'
-  pythPriceServer: 'https://xc-testnet.pyth.network',
+  // pythPriceServer: 'https://xc-testnet.pyth.network',
+  pythPriceServer: 'https://hermes-beta.pyth.network',
 };
 
 export const KeeperConfigSchema = z.object({

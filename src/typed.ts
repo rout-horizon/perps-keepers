@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 
 export enum KeeperType {
+  DelayedOrder = 'DelayedOrder',
   OffchainOrder = 'OffchainOrder',
   Liquidator = 'Liquidator',
 }
@@ -25,6 +26,7 @@ export interface Position {
 
 export interface DelayedOrder {
   account: string;
+  targetRoundId: ethers.BigNumber;
   executableAtTime: ethers.BigNumber;
   intentionTime: number; // Timestamp of block at which this event was triggered (submission ts).
   executionFailures: number; // Number of times this has failed to execute

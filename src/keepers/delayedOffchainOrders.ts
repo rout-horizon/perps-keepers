@@ -18,10 +18,10 @@ export class DelayedOffchainOrdersKeeper extends Keeper {
   //
   // Note: Since we don't use block.timestamp but rather Date.now, timestamps on-chain
   // may not be up to date as a result, executing a tiny bit too early (as seconds).
-  private readonly MIN_AGE_BUFFER = 10;
+  private readonly MIN_AGE_BUFFER = 5;
 
   // An additional buffer added to maxAge to determine if an order is stale.
-  private readonly MAX_AGE_BUFFER = 60 * 5; // 5mins (in seconds).
+  private readonly MAX_AGE_BUFFER = 30; // 1mins (in seconds).
 
   private readonly PYTH_MAX_TIMEOUT = 3000;
   private readonly PYTH_MAX_RETRIES = 5;
