@@ -72,7 +72,7 @@ export class DelayedOffchainOrdersKeeper extends Keeper {
       const { account } = args;
       switch (event) {
         case PerpsEvent.DelayedOrderSubmitted: {
-          const { executableAtTime, intentionTime, isOffchain } = args;
+          const { targetRoundId, executableAtTime, intentionTime, isOffchain } = args;
 
           if (!isOffchain) {
             this.logger.debug('Order is not off-chain, skipping', {
@@ -106,6 +106,7 @@ export class DelayedOffchainOrdersKeeper extends Keeper {
           }
 
           this.orders[account] = {
+            targetRoundId: targetRoundId,
             executableAtTime: executableAtTime,
             account,
             intentionTime: timestamp,

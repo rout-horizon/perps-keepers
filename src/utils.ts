@@ -439,6 +439,7 @@ const getOrdersByAddresses = async (
       if (rawDelayedOrder.isOffchain) {
         const delayedOrder: DelayedOrder = {
           account: address,
+          targetRoundId: rawDelayedOrder.targetRoundId,
           executableAtTime: rawDelayedOrder.executableAtTime,
           intentionTime: rawDelayedOrder.intentionTime,
           executionFailures: 0,

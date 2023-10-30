@@ -7,5 +7,10 @@ module.exports = {
       script: './build/index.js',
       args: 'run',
     },
+    {
+      name: 'perps-keeper-testnet',
+      script: './build/src/index.js',
+      args: 'run',
+    },
   ],
 };
