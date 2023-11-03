@@ -5,7 +5,7 @@ export const DEFAULT_CONFIG = {
   network: Network.OPT_GOERLI,
   maxOrderExecAttempts: 10,
   isMetricsEnabled: false,
-  distributorProcessInterval: 3000,
+  distributorProcessInterval: 1000,
   signerPoolSize: 1,
   signerPoolMonitorInterval: 1000 * 60, // 1min
 
@@ -19,8 +19,8 @@ export const DEFAULT_CONFIG = {
   // @see: https://github.com/pyth-network/pyth-js/tree/main/pyth-evm-js
   //   'https://xc-testnet.pyth.network'
   //   'https://xc-mainnet.pyth.network'
-  // pythPriceServer: 'https://xc-testnet.pyth.network',
-  pythPriceServer: 'https://hermes-beta.pyth.network',
+  pythPriceServer: 'https://xc-testnet.pyth.network',
+  // pythPriceServer: 'https://hermes-beta.pyth.network',
 };
 
 export const KeeperConfigSchema = z.object({

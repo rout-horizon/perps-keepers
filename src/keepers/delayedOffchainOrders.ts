@@ -21,9 +21,9 @@ export class DelayedOffchainOrdersKeeper extends Keeper {
   private readonly MIN_AGE_BUFFER = 5;
 
   // An additional buffer added to maxAge to determine if an order is stale.
-  private readonly MAX_AGE_BUFFER = 30; // 1mins (in seconds).
+  private readonly MAX_AGE_BUFFER = 10; // 1mins (in seconds).
 
-  private readonly PYTH_MAX_TIMEOUT = 3000;
+  private readonly PYTH_MAX_TIMEOUT = 1000;
   private readonly PYTH_MAX_RETRIES = 5;
 
   readonly EVENTS_OF_INTEREST: PerpsEvent[] = [

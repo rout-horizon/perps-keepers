@@ -9,7 +9,7 @@ module.exports = {
     },
     {
       name: 'perps-keeper-testnet',
-      script: './build/src/index.js',
+      script: './build/index.js',
       args: 'run',
     },
   ],
