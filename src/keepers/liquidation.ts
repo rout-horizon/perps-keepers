@@ -180,6 +180,8 @@ export class LiquidationKeeper extends Keeper {
     try {
       this.logger.debug('Checking if can liquidate', { args: { account } });
       const canLiquidateOrder = await this.market.canLiquidate(account);
+      const isFlaggedOrder = await this.market.isFlagged(account);
+
       if (!canLiquidateOrder) {
         // if it's not liquidatable update it's liquidation price
         this.positions[account].liqPrice = parseFloat(
@@ -191,32 +193,65 @@ export class LiquidationKeeper extends Keeper {
         });
         return;
       }
-
-      await this.signerPool
-        .withSigner(
-          async signer => {
-            const market = this.market.connect(signer);
-
-            this.logger.info('Flagging position...', { args: { account } });
-            const flagTx: TransactionResponse = await market.connect(signer).flagPosition(account);
-            this.logger.info('Submitted transaction, waiting for completion...', {
-              args: { account, nonce: flagTx.nonce },
+      else {
+        // Liquidate directly
+        if (isFlaggedOrder) {
+          await this.signerPool
+            .withSigner(
+              async signer => {
+                const market = this.market.connect(signer);
+                this.logger.info('Liquidating position...', { args: { account } });
+                const liquidateTx: TransactionResponse = await market
+                  .connect(signer)
+                  .liquidatePosition(account);
+                this.logger.info('Submitted transaction, waiting for completion...', {
+                  args: { account, nonce: liquidateTx.nonce },
+                });
+                await this.waitTx(liquidateTx);
+                await this.metrics.count(Metric.POSITION_LIQUIDATED, this.metricDimensions);
+              },
+              { asset: this.baseAsset }
+            )
+            .catch(err => {
+              this.logger.error('Failed while flagging position....', {
+                args: { account: account, error: err },
+              });
+              this.logger.error((err as Error).stack);
             });
-            await this.waitTx(flagTx);
+        }
+        // Flag and Liquidate
+        else {
+          await this.signerPool
+            .withSigner(
+              async signer => {
+                const market = this.market.connect(signer);
+                this.logger.info('Flagging position...', { args: { account } });
+                const flagTx: TransactionResponse = await market.connect(signer).flagPosition(account);
+                this.logger.info('Submitted transaction, waiting for completion...', {
+                  args: { account, nonce: flagTx.nonce },
+                });
+                await this.waitTx(flagTx);
 
-            this.logger.info('Liquidating position...', { args: { account } });
-            const liquidateTx: TransactionResponse = await market
-              .connect(signer)
-              .liquidatePosition(account);
-            this.logger.info('Submitted transaction, waiting for completion...', {
-              args: { account, nonce: liquidateTx.nonce },
+                this.logger.info('Liquidating position...', { args: { account } });
+                const liquidateTx: TransactionResponse = await market
+                  .connect(signer)
+                  .liquidatePosition(account);
+                this.logger.info('Submitted transaction, waiting for completion...', {
+                  args: { account, nonce: liquidateTx.nonce },
+                });
+                await this.waitTx(liquidateTx);
+                await this.metrics.count(Metric.POSITION_LIQUIDATED, this.metricDimensions);
+              },
+              { asset: this.baseAsset }
+            )
+            .catch(err => {
+              this.logger.error('Failed while flagging position....', {
+                args: { account: account, error: err },
+              });
+              this.logger.error((err as Error).stack);
             });
-            await this.waitTx(liquidateTx);
-            await this.metrics.count(Metric.POSITION_LIQUIDATED, this.metricDimensions);
-          },
-          { asset: this.baseAsset }
-        )
-        .catch(err => {});
+        }
+      }
     } catch (err) {
       await this.metrics.count(Metric.KEEPER_ERROR, this.metricDimensions);
       throw err;
