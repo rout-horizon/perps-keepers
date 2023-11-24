@@ -9,6 +9,8 @@ module.exports = {
     },
     {
       name: 'perps-keeper-testnet',
+      cron_restart: '0 0 * * *',
+      max_memory_restart: '1000M',
       script: './build/index.js',
       args: 'run',
     },

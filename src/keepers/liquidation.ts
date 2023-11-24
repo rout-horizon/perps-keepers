@@ -208,7 +208,8 @@ export class LiquidationKeeper extends Keeper {
                   args: { account, nonce: liquidateTx.nonce },
                 });
                 await this.waitTx(liquidateTx);
-                await this.metrics.count(Metric.POSITION_LIQUIDATED, this.metricDimensions);
+                this.metrics.count(Metric.POSITION_LIQUIDATED, true);
+                // await this.metrics.count(Metric.POSITION_LIQUIDATED, this.metricDimensions);
               },
               { asset: this.baseAsset }
             )
@@ -240,7 +241,8 @@ export class LiquidationKeeper extends Keeper {
                   args: { account, nonce: liquidateTx.nonce },
                 });
                 await this.waitTx(liquidateTx);
-                await this.metrics.count(Metric.POSITION_LIQUIDATED, this.metricDimensions);
+                this.metrics.count(Metric.POSITION_LIQUIDATED, true);
+                // await this.metrics.count(Metric.POSITION_LIQUIDATED, this.metricDimensions);
               },
               { asset: this.baseAsset }
             )
@@ -253,7 +255,8 @@ export class LiquidationKeeper extends Keeper {
         }
       }
     } catch (err) {
-      await this.metrics.count(Metric.KEEPER_ERROR, this.metricDimensions);
+      this.metrics.count(Metric.KEEPER_ERROR, true);
+      // await this.metrics.count(Metric.KEEPER_ERROR,this.metricDimensions);
       throw err;
     }
   }

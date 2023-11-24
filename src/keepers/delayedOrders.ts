@@ -138,7 +138,8 @@ export class DelayedOrdersKeeper extends Keeper {
           if (order.sizeDelta.eq(0)) {
             this.logger.info('Order does not exist, avoiding execution', { args: { account } });
             delete this.orders[account];
-            await this.metrics.count(Metric.DELAYED_ORDER_ALREADY_EXECUTED, this.metricDimensions);
+            this.metrics.count(Metric.DELAYED_ORDER_ALREADY_EXECUTED, true);
+            // await this.metrics.count(Metric.DELAYED_ORDER_ALREADY_EXECUTED, this.metricDimensions);
             return;
           } else {
             this.logger.info('Order found on-chain. Continuing...', { args: { account } });
@@ -164,10 +165,12 @@ export class DelayedOrdersKeeper extends Keeper {
         },
         { asset: this.baseAsset }
       );
-      await this.metrics.count(Metric.DELAYED_ORDER_EXECUTED, this.metricDimensions);
+      this.metrics.count(Metric.DELAYED_ORDER_EXECUTED, true);
+      // await this.metrics.count(Metric.DELAYED_ORDER_EXECUTED, this.metricDimensions);
     } catch (err) {
       order.executionFailures += 1;
-      await this.metrics.count(Metric.KEEPER_ERROR, this.metricDimensions);
+      this.metrics.count(Metric.KEEPER_ERROR, true);
+      // await this.metrics.count(Metric.KEEPER_ERROR, this.metricDimensions);
       this.logger.error('Delayed order execution failed', {
         args: { executionFailures: order.executionFailures, account: order.account, err },
       });

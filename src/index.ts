@@ -40,8 +40,10 @@ export const getProvider = (config: KeeperConfig['providerUrls']): providers.Jso
 };
 
 export const run = async (config: KeeperConfig) => {
-  const metrics = Metrics.create(config.isMetricsEnabled, config.network, config.aws);
-  await metrics.count(Metric.KEEPER_STARTUP);
+  const metrics = Metrics.create(config.isMetricsEnabled, config.network);
+  await metrics.count(Metric.KEEPER_STARTUP, true);
+  // const metrics = Metrics.create(config.isMetricsEnabled, config.network, config.aws);
+  // await metrics.count(Metric.KEEPER_STARTUP);
 
   const provider = getProvider(config.providerUrls);
   const latestBlock = await provider.getBlock('latest');

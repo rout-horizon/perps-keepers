@@ -53,7 +53,8 @@ export class Distributor {
   private async disburseToKeepers(toBlock: providers.Block): Promise<void> {
     const fromBlock = this.lastProcessedBlock ? this.lastProcessedBlock + 1 : toBlock.number;
     const blockDelta = toBlock.number - fromBlock;
-    await this.metrics.gauge(Metric.DISTRIBUTOR_BLOCK_DELTA, blockDelta);
+    this.metrics.gauge(Metric.DISTRIBUTOR_BLOCK_DELTA, blockDelta, 'blocks');
+    // await this.metrics.gauge(Metric.DISTRIBUTOR_BLOCK_DELTA, blockDelta);
 
     const events = await getEvents(this.getEventsOfInterest(), this.market, {
       fromBlock,
@@ -87,7 +88,8 @@ export class Distributor {
       // A failure to submit metric should not cause application to halt. Instead, alerts will pick this up if it happens
       // for a long enough duration. Essentially, do _not_ force keeper to slowdown operation just to track metrics
       // for offline usage/monitoring.
-      await this.metrics.time(Metric.KEEPER_UPTIME, uptime);
+      this.metrics.gauge(Metric.KEEPER_UPTIME, uptime, 'milliseconds');
+      // await this.metrics.time(Metric.KEEPER_UPTIME, uptime);
     } catch (err) {
       // NOTE: We do _not_ rethrow because healthchecks aren't `await` wrapped.
       this.logger.error('Distributor healthcheck failed', err);
@@ -121,7 +123,8 @@ export class Distributor {
           await this.executeKeepers();
           await this.tokenSwap.swap();
 
-          await this.metrics.time(Metric.DISTRIBUTOR_BLOCK_PROCESS_TIME, Date.now() - startTime);
+          this.metrics.gauge(Metric.DISTRIBUTOR_BLOCK_PROCESS_TIME, Date.now() - startTime, 'milliseconds');
+          // await this.metrics.time(Metric.DISTRIBUTOR_BLOCK_PROCESS_TIME, Date.now() - startTime);
         } catch (err) {
           this.logger.error('Encountered error at distributor loop', { args: { err } });
         }
@@ -132,7 +135,8 @@ export class Distributor {
       this.logger.error('Failed on listen or block consumption', {
         args: { waitTime: this.LISTEN_ERROR_WAIT_TIME },
       });
-      await this.metrics.count(Metric.KEEPER_ERROR);
+      this.metrics.count(Metric.KEEPER_ERROR, true);
+      // await this.metrics.count(Metric.KEEPER_ERROR);
 
       // Wait a minute and retry (may just be Node issues).
       await delay(this.LISTEN_ERROR_WAIT_TIME);
