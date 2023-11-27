@@ -182,7 +182,7 @@ export class LiquidationKeeper extends Keeper {
       const canLiquidateOrder = await this.market.canLiquidate(account);
       const isFlaggedOrder = await this.market.isFlagged(account);
 
-      if (!canLiquidateOrder) {
+      if (!canLiquidateOrder && !isFlaggedOrder) {
         // if it's not liquidatable update it's liquidation price
         this.positions[account].liqPrice = parseFloat(
           utils.formatUnits((await this.market.liquidationPrice(account)).price)
