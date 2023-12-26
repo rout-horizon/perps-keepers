@@ -6,6 +6,7 @@ module.exports = {
       max_memory_restart: '1000M',
       script: './build/index.js',
       args: 'run',
+      time: true
     },
     {
       name: 'perps-keeper-testnet',
@@ -13,6 +14,7 @@ module.exports = {
       max_memory_restart: '1000M',
       script: './build/index.js',
       args: 'run',
+      time: true
     },
   ],
 };

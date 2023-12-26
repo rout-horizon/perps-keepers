@@ -121,7 +121,7 @@ export class Distributor {
 
           await this.healthcheck();
           await this.executeKeepers();
-          await this.tokenSwap.swap();
+          // await this.tokenSwap.swap();
 
           this.metrics.gauge(Metric.DISTRIBUTOR_BLOCK_PROCESS_TIME, Date.now() - startTime, 'milliseconds');
           // await this.metrics.time(Metric.DISTRIBUTOR_BLOCK_PROCESS_TIME, Date.now() - startTime);

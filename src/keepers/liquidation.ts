@@ -178,6 +178,9 @@ export class LiquidationKeeper extends Keeper {
 
   private async liquidatePosition(account: string) {
     try {
+      // Create a public rpc signer as quicknode rpc behaves wierd 
+      const publicRpcProvider = new providers.JsonRpcProvider('https://data-seed-prebsc-1-s1.binance.org:8545/');
+
       this.logger.debug('Checking if can liquidate', { args: { account } });
       const canLiquidateOrder = await this.market.canLiquidate(account);
       const isFlaggedOrder = await this.market.isFlagged(account);
@@ -201,9 +204,27 @@ export class LiquidationKeeper extends Keeper {
               async signer => {
                 const market = this.market.connect(signer);
                 this.logger.info('Liquidating position...', { args: { account } });
+
+                // Estimate Gas
+                const gasEstimation = await market.estimateGas.liquidatePosition(account);
+
+                const gasLimit = wei(gasEstimation)
+                  .mul(1.2)   // Increase a little bit
+                  .toBN();
+
+                let gasPrice = await this.provider.getGasPrice()       // in v5 - we use getGasPrice
+                console.log('*************** Liquidation Keeper LiquidatePosition GasPrice**************', gasPrice.toString());
+                gasPrice = gasPrice.mul(2) // Increase a little bit
+
+                const gasOptions = {
+                  gasLimit: gasLimit,
+                  gasPrice: gasPrice
+                }
+
                 const liquidateTx: TransactionResponse = await market
-                  .connect(signer)
-                  .liquidatePosition(account);
+                  // .connect(signer)
+                  .connect(signer.connect(publicRpcProvider))
+                  .liquidatePosition(account, gasOptions);
                 this.logger.info('Submitted transaction, waiting for completion...', {
                   args: { account, nonce: liquidateTx.nonce },
                 });
@@ -227,7 +248,27 @@ export class LiquidationKeeper extends Keeper {
               async signer => {
                 const market = this.market.connect(signer);
                 this.logger.info('Flagging position...', { args: { account } });
-                const flagTx: TransactionResponse = await market.connect(signer).flagPosition(account);
+
+                // Estimate Gas
+                const gasEstimation = await market.estimateGas.flagPosition(account);
+
+                const gasLimit = wei(gasEstimation)
+                  .mul(1.2)   // Increase a little bit
+                  .toBN();
+
+                let gasPrice = await this.provider.getGasPrice()       // in v5 - we use getGasPrice
+                console.log('*************** Liquidation Keeper FlagPosition GasPrice**************', gasPrice.toString());
+                gasPrice = gasPrice.mul(2) // Increase a little bit
+
+                const gasOptions = {
+                  gasLimit: gasLimit,
+                  gasPrice: gasPrice
+                }
+
+                const flagTx: TransactionResponse = await market
+                  // .connect(signer)
+                  .connect(signer.connect(publicRpcProvider))
+                  .flagPosition(account, gasOptions);
                 this.logger.info('Submitted transaction, waiting for completion...', {
                   args: { account, nonce: flagTx.nonce },
                 });
@@ -235,7 +276,8 @@ export class LiquidationKeeper extends Keeper {
 
                 this.logger.info('Liquidating position...', { args: { account } });
                 const liquidateTx: TransactionResponse = await market
-                  .connect(signer)
+                  // .connect(signer)
+                  .connect(signer.connect(publicRpcProvider))
                   .liquidatePosition(account);
                 this.logger.info('Submitted transaction, waiting for completion...', {
                   args: { account, nonce: liquidateTx.nonce },

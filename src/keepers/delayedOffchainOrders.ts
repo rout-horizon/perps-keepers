@@ -226,19 +226,33 @@ export class DelayedOffchainOrdersKeeper extends Keeper {
             }
           );
           const gasLimit = wei(gasEstimation)
-            .mul(1.2)
+            .mul(1.2)   // Increase a little bit
             .toBN();
+          
+          let gasPrice = await this.provider.getGasPrice()       // in v5 - we use getGasPrice
+          console.log('***************gasPrice**************', gasPrice.toString());
+          console.log('*************** DelayedOffchainOrders Keeper ExecuteOffchainDelayedOrder GasPrice**************', gasPrice.toString());
+
+          gasPrice = gasPrice.mul(2) // Increase a little bit
 
           this.logger.info('Estimated gas with upped limits', {
             args: { account, estimation: gasEstimation.toString(), limit: gasLimit.toString() },
           });
-          const tx = await market.executeOffchainDelayedOrder(account, priceUpdateData, {
+
+          // Create a public rpc signer as quicknode rpc behaves wierd 
+          const publicRpcProvider = new providers.JsonRpcProvider('https://data-seed-prebsc-1-s1.binance.org:8545/');
+          const publicmarket = this.market.connect(signer.connect(publicRpcProvider));
+          // const tx = await market.executeOffchainDelayedOrder(account, priceUpdateData, {
+          const tx = await publicmarket.executeOffchainDelayedOrder(account, priceUpdateData, {
             value: updateFee,
             gasLimit,
+            gasPrice: gasPrice
           });
           this.logger.info('Submitted transaction, waiting for completion...', {
             args: { account, nonce: tx.nonce },
           });
+          console.log("Reaching HEREEEEEEE1 DelayedOffchainOrders Keeper");
+
           await this.waitTx(tx);
           delete this.orders[account];
         },
