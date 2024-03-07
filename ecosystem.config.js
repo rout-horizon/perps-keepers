@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'perps-keeper-mainnet',
-      cron_restart: '0 0 * * *',
+      cron_restart: '0 */5 * * *',
       max_memory_restart: '1000M',
       script: './build/index.js',
       args: 'run',
@@ -10,7 +10,7 @@ module.exports = {
     },
     {
       name: 'perps-keeper-testnet',
-      cron_restart: '0 0 * * *',
+      cron_restart: '0 */5 * * *',
       max_memory_restart: '1000M',
       script: './build/index.js',
       args: 'run',

@@ -6,7 +6,7 @@ import { Keeper } from '.';
 import { UNIT } from './helpers';
 import { PerpsEvent, Position } from '../typed';
 import { Metric, Metrics } from '../metrics';
-import { delay } from '../utils';
+import { delay, sendTG } from '../utils';
 import { SignerPool } from '../signerpool';
 
 export class LiquidationKeeper extends Keeper {
@@ -238,6 +238,7 @@ export class LiquidationKeeper extends Keeper {
               this.logger.error('Failed while flagging position....', {
                 args: { account: account, error: err },
               });
+              sendTG(`Liquidation-Order, User ${account}, Failed while flagging position.... Please process soon ${(err as Error).message}`);
               this.logger.error((err as Error).stack);
             });
         }
@@ -289,9 +290,11 @@ export class LiquidationKeeper extends Keeper {
               { asset: this.baseAsset }
             )
             .catch(err => {
-              this.logger.error('Failed while flagging position....', {
+              this.logger.error('Failed while liquidating position....', {
                 args: { account: account, error: err },
               });
+              sendTG(`Liquidation-Order, User ${account}, Failed while liquidating position.... Please process soon ${(err as Error).message}`);
+
               this.logger.error((err as Error).stack);
             });
         }
@@ -336,6 +339,7 @@ export class LiquidationKeeper extends Keeper {
       }
     } catch (err) {
       this.logger.error('Failed to execute liquidations', { args: { err } });
+      sendTG(`Liquidation Keeper Failed, Failed to execute liquidations Please process soon ${(err as Error).message}`);
       this.logger.error((err as Error).stack);
     }
   }

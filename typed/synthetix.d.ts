@@ -14,7 +14,7 @@ declare module 'synthetix' {
   };
 }
 
-declare module '@rout-horizon/testnet-contracts' {
+declare module '@horizon-protocol/smart-contract' {
   function getTarget({
     network: string,
     contract: string,

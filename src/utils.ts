@@ -1,7 +1,7 @@
 import { Contract, providers, Signer, BigNumber, utils } from 'ethers';
 import { chunk, flatten, isEmpty, sum, zipObject } from 'lodash';
-import synthetix from '@rout-horizon/testnet-contracts';
-// import synthetix from '@rout-horizon/horizon-testnet';
+import synthetix from '@horizon-protocol/smart-contract';
+// import synthetix from '@rout-horizon/testnet-contracts';
 import PerpsV2MarketConsolidatedJson from './abi/PerpsV2MarketConsolidated.json';
 import PythAbi from './abi/Pyth.json';
 import { createLogger } from './logging';
@@ -37,7 +37,7 @@ interface KeeperContracts {
 
 // @see: https://docs.pyth.network/consume-data/evm
 const PYTH_CONTRACT_ADDRESSES: Record<Network, string> = {
-  [Network.OPT_GOERLI]: '0xd7308b14BF4008e7C7196eC35610B1427C5702EA',
+  [Network.OPT_GOERLI]: '0x5744Cbf430D99456a0A8771208b674F27f8EF0Fb',
   [Network.OPT]: '0x4D7E825f80bDf85e913E0DD2A2D54927e9dE1594',
 };
 
@@ -485,3 +485,23 @@ export const getPendingOrders = async (
   // Finally, for all addresses, fetch the actual delayed order.
   return getOrdersByAddresses(addressesByMarket, markets, multicall, block);
 };
+
+export const sendTG = async (text: string) : Promise<void> => {
+  const headers = { "Accept-Encoding": "zh-CN,zh;q=0.9", "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36" };
+    const teleURL = `https://api.telegram.org/bot5303409425:AAEtJSpaMsN0L3Eg_23pVBwqPVymbLDFynk/sendMessage?chat_id=-733678471&text=${text}`
+  // // const teleURL = `https://api.telegram.org/bot1970470794:AAEjUUhyd7rdYNrwJZ-uLIxtYuXI4GTIumQ/sendMessage?chat_id=-1001579413187&text=${text}`
+  // const teleURL = `https://api.telegram.org/bot1970470794:AAEjUUhyd7rdYNrwJZ-uLIxtYuXI4GTIumQ/sendMessage?chat_id=-1001565839518&text=${text}`
+  // fetch price
+  await fetch(teleURL, {
+    method: 'GET',
+    headers: headers
+  })
+    .then(response => response.json())
+    // .then(data => {
+    //   console.log(data);
+    // });
+
+  // let myPromise = new Promise(function(resolve, reject) {
+  //   resolve("I telegram You !!");
+  // });
+}

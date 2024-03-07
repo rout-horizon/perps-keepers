@@ -4,7 +4,7 @@ import { Keeper } from '.';
 import { DelayedOrder, PerpsEvent } from '../typed';
 import { chunk } from 'lodash';
 import { Metric, Metrics } from '../metrics';
-import { delay } from '../utils';
+import { delay, sendTG } from '../utils';
 import { SignerPool } from '../signerpool';
 import { wei } from '@synthetixio/wei';
 
@@ -72,6 +72,7 @@ export class DelayedOrdersKeeper extends Keeper {
               timestamp = blockCache[blockNumber].timestamp;
             } catch (err) {
               this.logger.error(`Fetching block for evt failed '${evt.blockNumber}'`, err);
+              sendTG(`Delayed-Order, Fetching block for evt failed '${evt.blockNumber}'`);
               timestamp = 0;
             }
           } else {
@@ -124,6 +125,7 @@ export class DelayedOrdersKeeper extends Keeper {
       this.logger.info('Order execution exceeded max attempts', {
         args: { account, attempts: order.executionFailures },
       });
+      sendTG(`Delayed-Order, User ${account}, Order execution exceeded max attempts.`);
       delete this.orders[account];
       return;
     }
@@ -174,6 +176,7 @@ export class DelayedOrdersKeeper extends Keeper {
       this.logger.error('Delayed order execution failed', {
         args: { executionFailures: order.executionFailures, account: order.account, err },
       });
+      sendTG(`Delayed-Order, User ${account}, Order execution failed. Please process soon ${(err as Error).message}`);
       this.logger.error((err as Error).stack);
     }
   }

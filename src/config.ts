@@ -17,10 +17,8 @@ export const DEFAULT_CONFIG = {
   enabledKeepers: [KeeperType.DelayedOrder, KeeperType.OffchainOrder, KeeperType.Liquidator],
 
   // @see: https://github.com/pyth-network/pyth-js/tree/main/pyth-evm-js
-  //   'https://xc-testnet.pyth.network'
-  //   'https://xc-mainnet.pyth.network'
-  pythPriceServer: 'https://xc-testnet.pyth.network',
-  // pythPriceServer: 'https://hermes-beta.pyth.network',
+  // pythPriceServer: 'https://xc-testnet.pyth.network',
+  pythPriceServer: 'https://hermes.pyth.network',
 };
 
 export const KeeperConfigSchema = z.object({
