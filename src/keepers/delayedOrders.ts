@@ -4,7 +4,7 @@ import { Keeper } from '.';
 import { DelayedOrder, PerpsEvent } from '../typed';
 import { chunk } from 'lodash';
 import { Metric, Metrics } from '../metrics';
-import { delay, sendTG } from '../utils';
+import { delay, sendTG, parseTxnError } from '../utils';
 import { SignerPool } from '../signerpool';
 import { wei } from '@synthetixio/wei';
 
@@ -176,7 +176,8 @@ export class DelayedOrdersKeeper extends Keeper {
       this.logger.error('Delayed order execution failed', {
         args: { executionFailures: order.executionFailures, account: order.account, err },
       });
-      sendTG(`Delayed-Order, User ${account}, Order execution failed. Please process soon ${(err as Error).message}`);
+      const parsedResponse = parseTxnError(err);
+      sendTG(`Delayed-Order, User ${account}, Order execution failed. ${parsedResponse}`);
       this.logger.error((err as Error).stack);
     }
   }

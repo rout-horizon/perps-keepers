@@ -5,7 +5,7 @@ import { DelayedOrder, PerpsEvent } from '../typed';
 import { chunk } from 'lodash';
 import { EvmPriceServiceConnection } from '@pythnetwork/pyth-evm-js';
 import { Metric, Metrics } from '../metrics';
-import { delay, sendTG } from '../utils';
+import { delay, sendTG, parseTxnError } from '../utils';
 import { SignerPool } from '../signerpool';
 import { wei } from '@synthetixio/wei';
 
@@ -267,8 +267,9 @@ export class DelayedOffchainOrdersKeeper extends Keeper {
       // await this.metrics.count(Metric.KEEPER_ERROR, this.metricDimensions);
       this.logger.error('Off-chain order execution failed', {
         args: { executionFailures: order.executionFailures, account: order.account, err },
-      });
-      sendTG(`Delayed-OffchainOrder, User ${account}, Order execution failed. Please process soon ${(err as Error).message}`);
+      }); 
+      const parsedResponse = parseTxnError(err);
+      await sendTG(`Delayed-OffchainOrder, User ${account}, Order execution failed ${order.executionFailures} times.${parsedResponse}`);
       this.logger.error((err as Error).stack);
     }
   }
@@ -340,7 +341,7 @@ export class DelayedOffchainOrdersKeeper extends Keeper {
       }
     } catch (err) {
       this.logger.error('Failed to execute off-chain order', { args: { err } });
-      sendTG(`Delayed-OffchainOrders keeper failing. Please process soon ${(err as Error).message}`);
+      sendTG(`Delayed-OffchainOrders keeper failing. Please process soon ${(err as Error).stack}`);
       this.logger.error((err as Error).stack);
     }
   }

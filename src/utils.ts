@@ -1,5 +1,5 @@
 import { Contract, providers, Signer, BigNumber, utils } from 'ethers';
-import { chunk, flatten, isEmpty, sum, zipObject } from 'lodash';
+import { chunk, flatten, isEmpty, sum, zipObject, startCase } from 'lodash';
 import synthetix from '@horizon-protocol/smart-contract';
 // import synthetix from '@rout-horizon/testnet-contracts';
 import PerpsV2MarketConsolidatedJson from './abi/PerpsV2MarketConsolidated.json';
@@ -45,10 +45,10 @@ export const networkToSynthetixNetworkName = (network: Network): string => {
   switch (network) {
     case Network.OPT:
       return 'mainnet';
-      // return 'mainnet-ovm';
+    // return 'mainnet-ovm';
     case Network.OPT_GOERLI:
       return 'testnet';
-      // return 'goerli-ovm';
+    // return 'goerli-ovm';
     default:
       throw new Error(`Unsupported Synthetix Network Name Mapping '${network}'`);
   }
@@ -204,8 +204,8 @@ const getAddressLengthByMarket = async (
       state.interface.getFunction(rpcFunctionName),
       data.returnData
       // data
-      )[0];
-      
+    )[0];
+
     // console.log("******reaching length here*****4", length)
     // Avoid processing markets that have no positions.
     if (length.gt(0)) {
@@ -486,22 +486,46 @@ export const getPendingOrders = async (
   return getOrdersByAddresses(addressesByMarket, markets, multicall, block);
 };
 
-export const sendTG = async (text: string) : Promise<void> => {
+export const sendTG = async (text: string): Promise<void> => {
+  console.log("**********************************************************************************************1 TG SENT")
+  console.log("**********************************************************************************************2 TG MESSAGE", text)
+
+
   const headers = { "Accept-Encoding": "zh-CN,zh;q=0.9", "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36" };
-    const teleURL = `https://api.telegram.org/bot5303409425:AAEtJSpaMsN0L3Eg_23pVBwqPVymbLDFynk/sendMessage?chat_id=-733678471&text=${text}`
+  const teleURL = `https://api.telegram.org/bot5303409425:AAEtJSpaMsN0L3Eg_23pVBwqPVymbLDFynk/sendMessage?chat_id=-733678471&text=${text}`
   // // const teleURL = `https://api.telegram.org/bot1970470794:AAEjUUhyd7rdYNrwJZ-uLIxtYuXI4GTIumQ/sendMessage?chat_id=-1001579413187&text=${text}`
   // const teleURL = `https://api.telegram.org/bot1970470794:AAEjUUhyd7rdYNrwJZ-uLIxtYuXI4GTIumQ/sendMessage?chat_id=-1001565839518&text=${text}`
   // fetch price
-  await fetch(teleURL, {
+  const response = await fetch(teleURL, {
     method: 'GET',
     headers: headers
   })
-    .then(response => response.json())
-    // .then(data => {
-    //   console.log(data);
-    // });
+  const data = await response.json();
+  console.log(data);
+  // .then(response => response.json())
+  // .then(data => {
+  //   console.log(data);
+  // });
 
   // let myPromise = new Promise(function(resolve, reject) {
   //   resolve("I telegram You !!");
   // });
+  console.log("**********************************************************************************************3 TG SENT")
+
 }
+
+
+export const parseTxnError = (error: any) => {
+  if (error.reason) return startCase(error.reason);
+  let errorMessage = error.data?.message ?? error.message;
+  const isFrameWalletError = errorMessage?.includes('(error={');
+  if (isFrameWalletError) {
+    // Frame wallet throws a weird error, we try to parse the message and if it fails we just show the ugly full message
+    errorMessage = errorMessage.match(/"message":"([^"]+)"/)?.[1] || errorMessage;
+  }
+  if (errorMessage) {
+    return startCase(errorMessage);
+  }
+
+  return 'Unknown error';
+};

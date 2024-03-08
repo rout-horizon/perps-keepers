@@ -6,7 +6,7 @@ import { Keeper } from '.';
 import { UNIT } from './helpers';
 import { PerpsEvent, Position } from '../typed';
 import { Metric, Metrics } from '../metrics';
-import { delay, sendTG } from '../utils';
+import { delay, sendTG, parseTxnError } from '../utils';
 import { SignerPool } from '../signerpool';
 
 export class LiquidationKeeper extends Keeper {
@@ -238,7 +238,8 @@ export class LiquidationKeeper extends Keeper {
               this.logger.error('Failed while flagging position....', {
                 args: { account: account, error: err },
               });
-              sendTG(`Liquidation-Order, User ${account}, Failed while flagging position.... Please process soon ${(err as Error).message}`);
+              const parsedResponse = parseTxnError(err);
+              sendTG(`Liquidation-Order, User ${account}, Failed while flagging position.... ${parsedResponse}`);
               this.logger.error((err as Error).stack);
             });
         }
