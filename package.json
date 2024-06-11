@@ -6,7 +6,9 @@
   "scripts": {
     "start:mainnet": "pm2 start ecosystem.config.js --only perps-keeper-mainnet",
     "start:testnet": "pm2 start ecosystem.config.js --only perps-keeper-testnet",
+    "start:sepolia": "pm2 start ecosystem.config.js --only perps-keeper-sepolia",
     "dev": "name=perps-keeper-testnet ts-node-dev --respawn --transpile-only src/index.ts run",
+    "dev:sepolia": "name=perps-keeper-sepolia ts-node-dev --respawn --transpile-only src/index.ts run",
     "dev:mainnet": "name=perps-keeper-mainnet ts-node-dev --respawn --transpile-only src/index.ts run",
     "build": "rm -rf build/ && tsc && touch .env && cp .env build/",
     "lint": "eslint .",
@@ -22,7 +24,7 @@
     "@aws-sdk/client-cloudwatch-logs": "3.72.0",
     "@ethersproject/abstract-provider": "5.5.1",
     "@ethersproject/experimental": "5.6.0",
-    "@horizon-protocol/smart-contract": "^3.0.7",
+    "@horizon-protocol/smart-contract": "^3.0.12",
     "@pm2/io": "^5.0.2",
     "@pythnetwork/pyth-evm-js": "^1.1.0",
     "@synthetixio/wei": "^2.74.4",

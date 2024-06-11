@@ -35,4 +35,5 @@ export interface DelayedOrder {
 export enum Network {
   OPT = 'mainnet',
   OPT_GOERLI = 'testnet',
+  SEPOLIA='sepolia',
 }

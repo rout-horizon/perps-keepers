@@ -39,6 +39,7 @@ interface KeeperContracts {
 const PYTH_CONTRACT_ADDRESSES: Record<Network, string> = {
   [Network.OPT_GOERLI]: '0x5744Cbf430D99456a0A8771208b674F27f8EF0Fb',
   [Network.OPT]: '0x4D7E825f80bDf85e913E0DD2A2D54927e9dE1594',
+  [Network.SEPOLIA]: '0x4374e5a8b9C22271E9EB878A2AA31DE97DF15DAF',
 };
 
 export const networkToSynthetixNetworkName = (network: Network): string => {
@@ -48,6 +49,8 @@ export const networkToSynthetixNetworkName = (network: Network): string => {
     // return 'mainnet-ovm';
     case Network.OPT_GOERLI:
       return 'testnet';
+    case Network.SEPOLIA:
+      return 'sepolia';
     // return 'goerli-ovm';
     default:
       throw new Error(`Unsupported Synthetix Network Name Mapping '${network}'`);
@@ -78,6 +81,7 @@ export const getPerpsContracts = async (
   signer: Signer,
   provider: providers.BaseProvider
 ): Promise<KeeperContracts> => {
+	console.log('marketKeys', marketKeys);
   const marketManager = getSynthetixContractByName('FuturesMarketManager', network, provider);
   const exchangeRates = getSynthetixContractByName('ExchangeRates', network, provider);
   const marketSettings = getSynthetixContractByName('PerpsV2MarketSettings', network, provider);
@@ -114,6 +118,8 @@ export const getPerpsContracts = async (
       }
 
       const stateContractName = 'PerpsV2MarketState' + marketKey.replace(/^z/, '');
+              console.log('stateContractName', stateContractName);
+
       const marketState = getSynthetixContractByName(
         stateContractName,
         network,
@@ -135,6 +141,7 @@ export const getPerpsContracts = async (
     },
     {}
   );
+  
 
   logger.info('Fetching Pyth price feeds for kept markets...');
   const marketValues = Object.values(markets);
@@ -343,6 +350,7 @@ export const getOpenPositions = async (
   block: Block,
   provider: providers.JsonRpcProvider
 ): Promise<Record<string, Position[]>> => {
+
   logger.info('Fetching on-chain positions pinned at block', {
     args: { blockNumber: block.number },
   });

@@ -222,8 +222,8 @@ export class LiquidationKeeper extends Keeper {
                 }
 
                 const liquidateTx: TransactionResponse = await market
-                  // .connect(signer)
-                  .connect(signer.connect(publicRpcProvider))
+                  .connect(signer)
+                  // .connect(signer.connect(publicRpcProvider))
                   .liquidatePosition(account, gasOptions);
                 this.logger.info('Submitted transaction, waiting for completion...', {
                   args: { account, nonce: liquidateTx.nonce },
@@ -268,8 +268,8 @@ export class LiquidationKeeper extends Keeper {
                 }
 
                 const flagTx: TransactionResponse = await market
-                  // .connect(signer)
-                  .connect(signer.connect(publicRpcProvider))
+                  .connect(signer)
+                  // .connect(signer.connect(publicRpcProvider))
                   .flagPosition(account, gasOptions);
                 this.logger.info('Submitted transaction, waiting for completion...', {
                   args: { account, nonce: flagTx.nonce },
@@ -278,8 +278,8 @@ export class LiquidationKeeper extends Keeper {
 
                 this.logger.info('Liquidating position...', { args: { account } });
                 const liquidateTx: TransactionResponse = await market
-                  // .connect(signer)
-                  .connect(signer.connect(publicRpcProvider))
+                  .connect(signer)
+                  // .connect(signer.connect(publicRpcProvider))
                   .liquidatePosition(account);
                 this.logger.info('Submitted transaction, waiting for completion...', {
                   args: { account, nonce: liquidateTx.nonce },
