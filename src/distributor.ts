@@ -41,9 +41,8 @@ export class Distributor {
   private async updateKeeperIndexes(
     events: Event[],
     block: providers.Block,
-    assetPrice: number
   ): Promise<void[]> {
-    return Promise.all(this.keepers.map(keeper => keeper.updateIndex(events, block, assetPrice)));
+    return Promise.all(this.keepers.map(keeper => keeper.updateIndex(events, block)));
   }
 
   private async executeKeepers(): Promise<void[]> {
@@ -61,7 +60,7 @@ export class Distributor {
       toBlock: toBlock.number,
       logger: this.logger,
     });
-    const assetPrice = parseFloat(utils.formatUnits((await this.market.assetPrice()).price));
+    // const assetPrice = parseFloat(utils.formatUnits((await this.market.assetPrice()).price));
 
     this.logger.info('Distributing to keepers', {
       args: {
@@ -70,11 +69,10 @@ export class Distributor {
         toBlock: toBlock.number,
         blockDelta,
         events: events.length,
-        assetPrice,
       },
     });
 
-    await this.updateKeeperIndexes(events, toBlock, assetPrice);
+    await this.updateKeeperIndexes(events, toBlock);
   }
 
   // TODO: Each keeper should have a .healthcheck call which in-essence does the same thing.

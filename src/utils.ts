@@ -496,7 +496,7 @@ export const getPendingOrders = async (
 
 export const sendTG = async (text: string): Promise<void> => {
   console.log("**********************************************************************************************1 TG SENT")
-  console.log("**********************************************************************************************2 TG MESSAGE", text)
+  // console.log("**********************************************************************************************2 TG MESSAGE", text)
 
 
   const headers = { "Accept-Encoding": "zh-CN,zh;q=0.9", "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36" };

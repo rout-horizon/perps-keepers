@@ -311,134 +311,40 @@ export class LiquidationKeeper extends Keeper {
   async execute(): Promise<void> {
     try {
       // @see: https://www.multicall3.com/deployments
-      const rpcprovider = new providers.JsonRpcProvider(process.env.PROVIDER_URL_INFURA);
-        // "https://sly-solitary-aura.arbitrum-sepolia.quiknode.pro/80e7211daaac0ba78007cdd7329ed52274d98322/");
-
       const multicall = new Contract(
         '0xcA11bde05977b3631167028862bE2a173976CA11',
         MULTICALL_ABI,
-        rpcprovider
+        // signer
       );
       // Grab all open positions.
       const openPositions = Object.values(this.positions).filter(p => Math.abs(p.size) > 0);
-      this.logger.info('Active open positions  while liquidating position....', {
-        args: { openPositions: openPositions.length },
-      });
 
+      // Order the position in groups of priority that shouldn't be mixed in same batches
+      const positionGroups = this.liquidationGroups(openPositions);
+      const positionCount = flatten(positionGroups).length;
 
-      if (openPositions.length > 0) {
-        const pageSize = 20 // MULTICALL_PAGE_SIZE;
+      // No positions. Move on.
+      if (positionCount === 0) {
+        this.logger.debug('No positions ready... skipping');
+        return;
+      }
 
-        // Array to store promises for each callStatic result
-        const staticCallPromises: Promise<any>[] = [];
-
-        // Paginate the orders
-        for (let i = 0; i < openPositions.length; i += pageSize) {
-          const paginatedOrders = openPositions.slice(i, i + pageSize);
-
-          const staticCalls = paginatedOrders.map(order => {
-            return {
-              target: this.market.address,
-              callData: this.market.interface.encodeFunctionData("flagPosition", [order.account]),
-              allowFailure: true,
-            }
-          })
-
-          // Add the static call to the promises array
-          staticCallPromises.push(multicall.callStatic.aggregate3(staticCalls));
+      this.logger.info(`Found ${positionCount}/${openPositions.length} open position(s) to check`);
+      for (const group of positionGroups) {
+        if (!group.length) {
+          continue;
         }
 
-        type STATIC_CALL_RESULT = {
-          success: boolean,
-          returnData: string,
-        }
-
-        // Execute all static calls in parallel and accumulate results
-        const staticResultsArray: STATIC_CALL_RESULT[][] = await Promise.all(staticCallPromises);
-
-        let successfulPositions: Position[] = [];
-
-        // Filter positions that can be flagged
-        staticResultsArray.forEach((staticResults: STATIC_CALL_RESULT[], index) => {
-          const paginatedOrders = openPositions.slice(index * pageSize, (index + 1) * pageSize);
-          const successfulPagePositions = paginatedOrders.filter((_, i) => staticResults[i].success);
-          successfulPositions = successfulPositions.concat(successfulPagePositions);
-        });
-
-        this.logger.info(`Ready to execute: ${successfulPositions.length}`);
-        if (successfulPositions.length > 0) {
-          // Create the actual execution payload
-          const executeCalls = successfulPositions.slice(0, pageSize).map(order => {
-            return {
-              target: this.market.address,
-              callData: this.market.interface.encodeFunctionData("flagPosition", [order.account]),
-              allowFailure: true,
-            }
-          });
-
-          await this.signerPool
-            .withSigner(
-              async signer => {
-                // const market = multicall.connect(signer);
-                // this.logger.info('Flagging position...', { args: { account } });
-
-                // Estimate Gas
-                // const gasEstimation = await market.estimateGas.flagPosition(account);
-                const gasEstimation = await multicall.estimateGas.aggregate3(executeCalls);
-
-
-                const gasLimit = wei(gasEstimation)
-                  .mul(1.2)   // Increase a little bit
-                  .toBN();
-
-                let gasPrice = await this.provider.getGasPrice()       // in v5 - we use getGasPrice
-                console.log('*************** Liquidation Keeper FlagPosition GasPrice**************', gasPrice.toString());
-                gasPrice = gasPrice.mul(2) // Increase a little bit
-
-                const gasOptions = {
-                  gasLimit: gasLimit,
-                  gasPrice: gasPrice
-                }
-
-                const flagTx: TransactionResponse = await multicall
-                  .connect(signer)
-                  .aggregate3(executeCalls, gasOptions);
-
-                // const flagTx: TransactionResponse = await market
-                //   .connect(signer)
-                //   // .connect(signer.connect(publicRpcProvider))
-                //   .flagPosition(account, gasOptions);
-                this.logger.info('Submitted transaction, waiting for completion...', {
-                  args: { nonce: flagTx.nonce },
-                });
-                await this.waitTx(flagTx);
-
-                // this.logger.info('Liquidating position...', { args: { nonce: flagTx.nonce } });
-                // const liquidateTx: TransactionResponse = await multicall
-                //   .connect(signer)
-                //   // .connect(signer.connect(publicRpcProvider))
-                //   .liquidatePosition(account);
-                // this.logger.info('Submitted transaction, waiting for completion...', {
-                //   args: { account, nonce: liquidateTx.nonce },
-                // });
-                // await this.waitTx(liquidateTx);
-                // this.metrics.count(Metric.POSITION_LIQUIDATED, true);
-                // await this.metrics.count(Metric.POSITION_LIQUIDATED, this.metricDimensions);
-              },
-              { asset: this.baseAsset }
-            )
-            .catch(err => {
-              this.logger.error('Failed while liquidating position....', {
-                args: { error: err },
-              });
-              // sendTG(`Liquidation-Order, User ${account}, Failed while liquidating position.... Please process soon ${(err as Error).message}`);
-
-              this.logger.error((err as Error).stack);
-            });
+        // Batch the groups to maintain internal order within groups
+        for (const batch of chunk(group, this.MAX_BATCH_SIZE)) {
+          this.logger.info(`Running keeper batch with '${batch.length}' position(s) to keep`);
+          const batches = batch.map(({ id, account }) =>
+            this.execAsyncKeeperCallback(id, () => this.liquidatePosition(account))
+          );
+          await Promise.all(batches);
+          await delay(this.BATCH_WAIT_TIME);
         }
       }
-      else return;
-
     } catch (err) {
       this.logger.error('Failed to execute liquidations', { args: { err } });
       sendTG(`Liquidation Keeper Failed, Failed to execute liquidations Please process soon ${(err as Error).message}`);
